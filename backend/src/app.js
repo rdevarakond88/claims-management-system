@@ -5,6 +5,7 @@ const pgSession = require('connect-pg-simple')(session);
 const { PrismaClient } = require('@prisma/client');
 
 const authRoutes = require('./routes/auth.routes');
+const claimsRoutes = require('./routes/claims.routes');
 
 const app = express();
 const prisma = new PrismaClient();
@@ -36,6 +37,7 @@ app.use(session({
 
 // Routes
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/claims', claimsRoutes);
 
 // Health check endpoint
 app.get('/api/v1/health', (req, res) => {
