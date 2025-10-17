@@ -173,6 +173,168 @@ const listClaims = async (userId, userRole, filters = {}) => {
 };
 
 /**
+ * Adjudicate a claim (approve or deny)
+ * @param {string} claimId - Claim ID to adjudicate
+ * @param {string} decision - 'approve' or 'deny'
+ * @param {string} userId - ID of user adjudicating
+ * @param {Object} adjudicationData - Additional adjudication data
+ * @returns {Object} Updated claim with details
+ */
+const adjudicateClaim = async (claimId, decision, userId, adjudicationData) => {
+  // Validate decision
+  if (!['approve', 'deny'].includes(decision)) {
+    throw new Error('Decision must be either "approve" or "deny"');
+  }
+
+  // Get the existing claim
+  const existingClaim = await prisma.claim.findUnique({
+    where: { id: claimId }
+  });
+
+  if (!existingClaim) {
+    throw new Error('Claim not found');
+  }
+
+  // Check if already adjudicated
+  if (existingClaim.status !== 'submitted') {
+    throw new Error('Claim has already been adjudicated');
+  }
+
+  // Validate based on decision type
+  if (decision === 'approve') {
+    const { approvedAmount, notes } = adjudicationData;
+
+    if (!approvedAmount || approvedAmount <= 0) {
+      throw new Error('Approved amount must be greater than 0');
+    }
+
+    if (approvedAmount > existingClaim.billedAmount) {
+      throw new Error('Approved amount cannot exceed billed amount');
+    }
+
+    if (notes && notes.length > 500) {
+      throw new Error('Notes cannot exceed 500 characters');
+    }
+  } else if (decision === 'deny') {
+    const { denialReasonCode, denialExplanation } = adjudicationData;
+
+    if (!denialReasonCode) {
+      throw new Error('Denial reason code is required');
+    }
+
+    const validReasonCodes = [
+      'INVALID_CPT',
+      'INVALID_DIAGNOSIS',
+      'NOT_COVERED',
+      'PATIENT_INELIGIBLE',
+      'DUPLICATE_CLAIM',
+      'INSUFFICIENT_DOCS',
+      'OTHER'
+    ];
+
+    if (!validReasonCodes.includes(denialReasonCode)) {
+      throw new Error('Invalid denial reason code');
+    }
+
+    if (!denialExplanation || denialExplanation.length < 20) {
+      throw new Error('Denial explanation must be at least 20 characters');
+    }
+
+    if (denialExplanation.length > 1000) {
+      throw new Error('Denial explanation cannot exceed 1000 characters');
+    }
+  }
+
+  // Perform adjudication in a transaction
+  const updatedClaim = await prisma.$transaction(async (tx) => {
+    const updateData = {
+      status: decision === 'approve' ? 'approved' : 'denied',
+      adjudicatedByUserId: userId,
+      adjudicatedAt: new Date()
+    };
+
+    if (decision === 'approve') {
+      updateData.approvedAmount = adjudicationData.approvedAmount;
+      updateData.adjudicationNotes = adjudicationData.notes || null;
+    } else {
+      updateData.denialReasonCode = adjudicationData.denialReasonCode;
+      updateData.denialExplanation = adjudicationData.denialExplanation;
+    }
+
+    // Update the claim
+    const claim = await tx.claim.update({
+      where: { id: claimId },
+      data: updateData,
+      include: {
+        provider: true,
+        submittedBy: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        },
+        adjudicatedBy: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    // Create audit log entry
+    const auditDetails = {
+      status: updateData.status,
+      oldStatus: existingClaim.status
+    };
+
+    if (decision === 'approve') {
+      auditDetails.approvedAmount = adjudicationData.approvedAmount.toString();
+      if (adjudicationData.notes) {
+        auditDetails.notes = adjudicationData.notes;
+      }
+    } else {
+      auditDetails.denialReasonCode = adjudicationData.denialReasonCode;
+      auditDetails.denialExplanation = adjudicationData.denialExplanation;
+    }
+
+    await tx.auditLog.create({
+      data: {
+        claimId: claim.id,
+        userId: userId,
+        action: decision === 'approve' ? 'approved' : 'denied',
+        oldStatus: existingClaim.status,
+        newStatus: updateData.status,
+        details: auditDetails
+      }
+    });
+
+    return claim;
+  });
+
+  // Format response
+  return {
+    id: updatedClaim.id,
+    claimNumber: updatedClaim.claimNumber,
+    status: updatedClaim.status,
+    approvedAmount: updatedClaim.approvedAmount,
+    denialReasonCode: updatedClaim.denialReasonCode,
+    denialExplanation: updatedClaim.denialExplanation,
+    adjudicationNotes: updatedClaim.adjudicationNotes,
+    adjudicatedBy: {
+      id: updatedClaim.adjudicatedBy.id,
+      name: `${updatedClaim.adjudicatedBy.firstName} ${updatedClaim.adjudicatedBy.lastName}`,
+      email: updatedClaim.adjudicatedBy.email
+    },
+    adjudicatedAt: updatedClaim.adjudicatedAt
+  };
+};
+
+/**
  * Get single claim details
  * @param {string} claimId - Claim ID
  * @param {string} userId - User ID requesting
@@ -285,5 +447,6 @@ const getClaimById = async (claimId, userId, userRole) => {
 module.exports = {
   createClaim,
   listClaims,
-  getClaimById
+  getClaimById,
+  adjudicateClaim
 };

@@ -12,6 +12,9 @@ router.post('/', requireRole(['provider_staff']), claimsController.createClaim);
 // List claims (Provider sees their claims, Payer sees all)
 router.get('/', claimsController.listClaims);
 
+// Adjudicate claim (Payer only)
+router.patch('/:id/adjudicate', requireRole(['payer_processor']), claimsController.adjudicateClaim);
+
 // Get single claim details
 router.get('/:id', claimsController.getClaimById);
 
