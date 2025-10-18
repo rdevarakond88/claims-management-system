@@ -42,8 +42,7 @@ const Dashboard = () => {
   };
 
   const handleSubmitNewClaim = () => {
-    // Placeholder for future implementation
-    alert('Submit New Claim feature coming soon!');
+    navigate('/claims/submit');
   };
 
   const getStatusBadgeColor = (status) => {

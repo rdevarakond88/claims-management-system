@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
+import SubmitClaimPage from './pages/SubmitClaimPage';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -57,6 +58,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/claims/submit"
+            element={
+              <ProtectedRoute>
+                <SubmitClaimPage />
               </ProtectedRoute>
             }
           />
