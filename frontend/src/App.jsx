@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import SubmitClaimPage from './pages/SubmitClaimPage';
+import ClaimDetailPage from './pages/ClaimDetailPage';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -66,6 +67,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <SubmitClaimPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/claims/:id"
+            element={
+              <ProtectedRoute>
+                <ClaimDetailPage />
               </ProtectedRoute>
             }
           />
