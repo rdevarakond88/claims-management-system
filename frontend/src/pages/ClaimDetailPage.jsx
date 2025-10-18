@@ -1,13 +1,25 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from "../api/client";
+import { useAuth } from '../contexts/AuthContext';
 
 const ClaimDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [claim, setClaim] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [showDenyModal, setShowDenyModal] = useState(false);
+  const [adjudicating, setAdjudicating] = useState(false);
+  const [adjudicationError, setAdjudicationError] = useState(null);
+
+  // Adjudication form states
+  const [approvedAmount, setApprovedAmount] = useState('');
+  const [denialReasonCode, setDenialReasonCode] = useState('');
+  const [denialExplanation, setDenialExplanation] = useState('');
+  const [adjudicationNotes, setAdjudicationNotes] = useState('');
 
   useEffect(() => {
     const fetchClaim = async () => {
@@ -67,6 +79,109 @@ const ClaimDetailPage = () => {
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
+
+  const handleApprove = () => {
+    setApprovedAmount(claim.service?.billedAmount?.toString() || '');
+    setAdjudicationNotes('');
+    setAdjudicationError(null);
+    setShowApproveModal(true);
+  };
+
+  const handleDeny = () => {
+    setDenialReasonCode('');
+    setDenialExplanation('');
+    setAdjudicationNotes('');
+    setAdjudicationError(null);
+    setShowDenyModal(true);
+  };
+
+  const submitApproval = async (e) => {
+    e.preventDefault();
+    setAdjudicating(true);
+    setAdjudicationError(null);
+
+    try {
+      const response = await apiClient.patch(`/claims/${id}/adjudicate`, {
+        decision: 'approve',
+        approved_amount: parseFloat(approvedAmount),
+        notes: adjudicationNotes || undefined
+      });
+
+      // Update claim with response data
+      setClaim(response.data.claim);
+      setShowApproveModal(false);
+    } catch (err) {
+      console.error('Approval error:', err.response?.data);
+
+      // Format error message
+      let errorMsg = 'Failed to approve claim';
+      if (err.response?.data?.error) {
+        const error = err.response.data.error;
+        if (error.message) {
+          errorMsg = error.message;
+          // If there are validation details, append them
+          if (error.details) {
+            const detailMessages = Object.entries(error.details)
+              .map(([field, msg]) => `${field}: ${msg}`)
+              .join(', ');
+            errorMsg += ` - ${detailMessages}`;
+          }
+        } else if (typeof error === 'string') {
+          errorMsg = error;
+        }
+      }
+
+      setAdjudicationError(errorMsg);
+    } finally {
+      setAdjudicating(false);
+    }
+  };
+
+  const submitDenial = async (e) => {
+    e.preventDefault();
+    setAdjudicating(true);
+    setAdjudicationError(null);
+
+    try {
+      const response = await apiClient.patch(`/claims/${id}/adjudicate`, {
+        decision: 'deny',
+        denial_reason_code: denialReasonCode,
+        denial_explanation: denialExplanation,
+        notes: adjudicationNotes || undefined
+      });
+
+      // Update claim with response data
+      setClaim(response.data.claim);
+      setShowDenyModal(false);
+    } catch (err) {
+      console.error('Denial error:', err.response?.data);
+
+      // Format error message
+      let errorMsg = 'Failed to deny claim';
+      if (err.response?.data?.error) {
+        const error = err.response.data.error;
+        if (error.message) {
+          errorMsg = error.message;
+          // If there are validation details, append them
+          if (error.details) {
+            const detailMessages = Object.entries(error.details)
+              .map(([field, msg]) => `${field}: ${msg}`)
+              .join(', ');
+            errorMsg += ` - ${detailMessages}`;
+          }
+        } else if (typeof error === 'string') {
+          errorMsg = error;
+        }
+      }
+
+      setAdjudicationError(errorMsg);
+    } finally {
+      setAdjudicating(false);
+    }
+  };
+
+  const isPayer = user?.role === 'payer_processor';
+  const canAdjudicate = isPayer && claim?.status?.toLowerCase() === 'submitted';
 
   if (loading) {
     return (
@@ -214,6 +329,33 @@ const ClaimDetailPage = () => {
           </div>
         </div>
 
+        {/* Adjudication Actions - Only show for payers on submitted claims */}
+        {canAdjudicate && (
+          <div className="bg-white shadow rounded-lg p-6 mb-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Adjudication Actions</h2>
+            <div className="flex gap-4">
+              <button
+                onClick={handleApprove}
+                className="flex-1 inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              >
+                <svg className="mr-2 -ml-1 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Approve Claim
+              </button>
+              <button
+                onClick={handleDeny}
+                className="flex-1 inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              >
+                <svg className="mr-2 -ml-1 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Deny Claim
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Adjudication Details - Only show if claim is adjudicated */}
         {(claim.status === 'approved' || claim.status === 'denied') && (
           <div className="bg-white shadow rounded-lg p-6 mb-6">
@@ -321,6 +463,169 @@ const ClaimDetailPage = () => {
                   </li>
                 ))}
               </ul>
+            </div>
+          </div>
+        )}
+
+        {/* Approve Modal */}
+        {showApproveModal && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+              <div className="mt-3">
+                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Approve Claim</h3>
+                {adjudicationError && (
+                  <div className="mb-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded">
+                    {adjudicationError}
+                  </div>
+                )}
+                <form onSubmit={submitApproval}>
+                  <div className="mb-4">
+                    <label htmlFor="approvedAmount" className="block text-sm font-medium text-gray-700 mb-2">
+                      Approved Amount *
+                    </label>
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
+                      <input
+                        type="number"
+                        id="approvedAmount"
+                        value={approvedAmount}
+                        onChange={(e) => setApprovedAmount(e.target.value)}
+                        step="0.01"
+                        min="0"
+                        max={claim.service?.billedAmount}
+                        required
+                        className="pl-7 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      />
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Billed amount: {formatCurrency(claim.service?.billedAmount)}
+                    </p>
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="adjudicationNotes" className="block text-sm font-medium text-gray-700 mb-2">
+                      Notes (Optional)
+                    </label>
+                    <textarea
+                      id="adjudicationNotes"
+                      value={adjudicationNotes}
+                      onChange={(e) => setAdjudicationNotes(e.target.value)}
+                      rows={3}
+                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      placeholder="Add any notes about this approval..."
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      type="submit"
+                      disabled={adjudicating}
+                      className="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+                    >
+                      {adjudicating ? 'Approving...' : 'Approve'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowApproveModal(false)}
+                      disabled={adjudicating}
+                      className="flex-1 inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Deny Modal */}
+        {showDenyModal && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+              <div className="mt-3">
+                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Deny Claim</h3>
+                {adjudicationError && (
+                  <div className="mb-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded">
+                    {adjudicationError}
+                  </div>
+                )}
+                <form onSubmit={submitDenial}>
+                  <div className="mb-4">
+                    <label htmlFor="denialReasonCode" className="block text-sm font-medium text-gray-700 mb-2">
+                      Denial Reason Code *
+                    </label>
+                    <select
+                      id="denialReasonCode"
+                      value={denialReasonCode}
+                      onChange={(e) => setDenialReasonCode(e.target.value)}
+                      required
+                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    >
+                      <option value="">Select a reason...</option>
+                      <option value="INVALID_CPT">Invalid CPT Code</option>
+                      <option value="INVALID_DIAGNOSIS">Invalid Diagnosis Code</option>
+                      <option value="NOT_COVERED">Service Not Covered</option>
+                      <option value="PATIENT_INELIGIBLE">Patient Ineligible</option>
+                      <option value="DUPLICATE_CLAIM">Duplicate Claim</option>
+                      <option value="INSUFFICIENT_DOCS">Insufficient Documentation</option>
+                      <option value="OTHER">Other</option>
+                    </select>
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="denialExplanation" className="block text-sm font-medium text-gray-700 mb-2">
+                      Explanation * (minimum 20 characters)
+                    </label>
+                    <textarea
+                      id="denialExplanation"
+                      value={denialExplanation}
+                      onChange={(e) => setDenialExplanation(e.target.value)}
+                      rows={3}
+                      required
+                      minLength={20}
+                      maxLength={1000}
+                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      placeholder="Provide a detailed explanation for the denial (at least 20 characters)..."
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      {denialExplanation.length}/1000 characters
+                      {denialExplanation.length > 0 && denialExplanation.length < 20 && (
+                        <span className="text-red-600 ml-2">
+                          (Need {20 - denialExplanation.length} more characters)
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="adjudicationNotesdeny" className="block text-sm font-medium text-gray-700 mb-2">
+                      Additional Notes (Optional)
+                    </label>
+                    <textarea
+                      id="adjudicationNotesdeny"
+                      value={adjudicationNotes}
+                      onChange={(e) => setAdjudicationNotes(e.target.value)}
+                      rows={2}
+                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      placeholder="Add any additional notes..."
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      type="submit"
+                      disabled={adjudicating}
+                      className="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+                    >
+                      {adjudicating ? 'Denying...' : 'Deny'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowDenyModal(false)}
+                      disabled={adjudicating}
+                      className="flex-1 inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         )}
