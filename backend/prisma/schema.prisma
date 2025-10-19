@@ -1,10 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -24,80 +17,77 @@ model Provider {
   email     String?
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-  
-  users     User[]
   claims    Claim[]
+  users     User[]
 
   @@map("providers")
 }
 
 model Payer {
-  id         String   @id @default(uuid())
-  name       String
-  payerCode  String   @unique @map("payer_code")
-  city       String?
-  state      String?
-  phone      String?
-  email      String?
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
-  
-  users      User[]
+  id        String   @id @default(uuid())
+  name      String
+  payerCode String   @unique @map("payer_code")
+  city      String?
+  state     String?
+  phone     String?
+  email     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  users     User[]
 
   @@map("payers")
 }
 
 model User {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  passwordHash String    @map("password_hash")
-  role         String
-  providerId   String?   @map("provider_id")
-  payerId      String?   @map("payer_id")
-  firstName    String?   @map("first_name")
-  lastName     String?   @map("last_name")
-  isActive     Boolean   @default(true) @map("is_active")
-  lastLogin    DateTime? @map("last_login")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
-  
-  provider           Provider?  @relation(fields: [providerId], references: [id])
-  payer              Payer?     @relation(fields: [payerId], references: [id])
-  submittedClaims    Claim[]    @relation("SubmittedBy")
-  adjudicatedClaims  Claim[]    @relation("AdjudicatedBy")
-  auditLogs          AuditLog[]
+  id                String     @id @default(uuid())
+  email             String     @unique
+  passwordHash      String     @map("password_hash")
+  role              String
+  providerId        String?    @map("provider_id")
+  payerId           String?    @map("payer_id")
+  firstName         String?    @map("first_name")
+  lastName          String?    @map("last_name")
+  isActive          Boolean    @default(true) @map("is_active")
+  isFirstLogin      Boolean    @default(true) @map("is_first_login")
+  lastLogin         DateTime?  @map("last_login")
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @updatedAt @map("updated_at")
+  auditLogs         AuditLog[]
+  adjudicatedClaims Claim[]    @relation("AdjudicatedBy")
+  submittedClaims   Claim[]    @relation("SubmittedBy")
+  payer             Payer?     @relation(fields: [payerId], references: [id])
+  provider          Provider?  @relation(fields: [providerId], references: [id])
 
   @@map("users")
 }
 
 model Claim {
-  id                    String    @id @default(uuid())
-  claimNumber           String    @unique @map("claim_number")
-  providerId            String    @map("provider_id")
-  submittedByUserId     String    @map("submitted_by_user_id")
-  status                String    @default("submitted")
-  patientFirstName      String    @map("patient_first_name")
-  patientLastName       String    @map("patient_last_name")
-  patientDob            DateTime  @map("patient_dob") @db.Date
-  patientMemberId       String    @map("patient_member_id")
-  cptCode               String    @map("cpt_code")
-  icd10Code             String    @map("icd10_code")
-  serviceDate           DateTime  @map("service_date") @db.Date
-  billedAmount          Decimal   @map("billed_amount") @db.Decimal(10, 2)
-  approvedAmount        Decimal?  @map("approved_amount") @db.Decimal(10, 2)
-  denialReasonCode      String?   @map("denial_reason_code")
-  denialExplanation     String?   @map("denial_explanation")
-  adjudicationNotes     String?   @map("adjudication_notes")
-  adjudicatedByUserId   String?   @map("adjudicated_by_user_id")
-  adjudicatedAt         DateTime? @map("adjudicated_at")
-  submittedAt           DateTime  @default(now()) @map("submitted_at")
-  createdAt             DateTime  @default(now()) @map("created_at")
-  updatedAt             DateTime  @updatedAt @map("updated_at")
-  
-  provider       Provider   @relation(fields: [providerId], references: [id])
-  submittedBy    User       @relation("SubmittedBy", fields: [submittedByUserId], references: [id])
-  adjudicatedBy  User?      @relation("AdjudicatedBy", fields: [adjudicatedByUserId], references: [id])
-  auditLogs      AuditLog[]
+  id                  String     @id @default(uuid())
+  claimNumber         String     @unique @map("claim_number")
+  providerId          String     @map("provider_id")
+  submittedByUserId   String     @map("submitted_by_user_id")
+  status              String     @default("submitted")
+  patientFirstName    String     @map("patient_first_name")
+  patientLastName     String     @map("patient_last_name")
+  patientDob          DateTime   @map("patient_dob") @db.Date
+  patientMemberId     String     @map("patient_member_id")
+  cptCode             String     @map("cpt_code")
+  icd10Code           String     @map("icd10_code")
+  serviceDate         DateTime   @map("service_date") @db.Date
+  billedAmount        Decimal    @map("billed_amount") @db.Decimal(10, 2)
+  approvedAmount      Decimal?   @map("approved_amount") @db.Decimal(10, 2)
+  denialReasonCode    String?    @map("denial_reason_code")
+  denialExplanation   String?    @map("denial_explanation")
+  adjudicationNotes   String?    @map("adjudication_notes")
+  adjudicatedByUserId String?    @map("adjudicated_by_user_id")
+  adjudicatedAt       DateTime?  @map("adjudicated_at")
+  submittedAt         DateTime   @default(now()) @map("submitted_at")
+  createdAt           DateTime   @default(now()) @map("created_at")
+  updatedAt           DateTime   @updatedAt @map("updated_at")
+  auditLogs           AuditLog[]
+  adjudicatedBy       User?      @relation("AdjudicatedBy", fields: [adjudicatedByUserId], references: [id])
+  provider            Provider   @relation(fields: [providerId], references: [id])
+  submittedBy         User       @relation("SubmittedBy", fields: [submittedByUserId], references: [id])
 
   @@map("claims")
 }
@@ -111,9 +101,16 @@ model AuditLog {
   newStatus String?  @map("new_status")
   details   Json?
   createdAt DateTime @default(now()) @map("created_at")
-  
-  claim Claim @relation(fields: [claimId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id])
+  claim     Claim    @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
 
   @@map("audit_log")
+}
+
+model session {
+  sid    String   @id @db.VarChar
+  sess   Json     @db.Json
+  expire DateTime @db.Timestamp(6)
+
+  @@index([expire], map: "IDX_session_expire")
 }

@@ -216,6 +216,16 @@ A system where:
 - Providers see only their own claims
 - Payers see all claims (or filtered by payer organization)
 - Admins see all data and manage users
+- **User Onboarding (Admin-Provisioned):**
+  - Admin creates user accounts via admin dashboard
+  - System auto-generates secure temporary password (12+ chars)
+  - Temporary password displayed once to admin (not retrievable later)
+  - Admin manually shares temp password with new user
+  - On first login, user forced to set permanent password
+  - Cannot access system until password changed
+  - Passwords must meet strength requirements (min 8 chars, uppercase, lowercase, number)
+- Session-based authentication with 30-minute timeout
+- Passwords hashed with bcrypt before storage
 
 ### FR-2: Claims Submission
 - Provider can create new claim with fields:
@@ -298,11 +308,14 @@ A system where:
 
 ### Endpoints (RESTful)
 - `POST /api/auth/login` — User authentication
+- `POST /api/auth/set-password` — Set new password on first login
 - `POST /api/claims` — Submit new claim
 - `GET /api/claims` — List claims (filtered by user role)
 - `GET /api/claims/:id` — Get claim details
 - `PATCH /api/claims/:id/adjudicate` — Approve or deny claim
 - `GET /api/users/profile` — Get logged-in user info
+- `GET /api/admin/users` — List all users (admin only)
+- `POST /api/admin/users` — Create user with temp password (admin only)
 
 ---
 
@@ -315,10 +328,12 @@ A system where:
 
 ### Key Screens
 1. **Login Page** — Simple form with email/password
-2. **Provider Dashboard** — List of claims with status badges
-3. **Claims Submission Form** — Multi-section form with validation
-4. **Payer Claims Queue** — Sortable table with review actions
-5. **Claim Detail View** — Full claim data with status timeline
+2. **Set Password Page** — First-login forced password change
+3. **Provider Dashboard** — List of claims with status badges
+4. **Claims Submission Form** — Multi-section form with validation
+5. **Payer Claims Queue** — Sortable table with review actions
+6. **Claim Detail View** — Full claim data with status timeline
+7. **Admin Dashboard** — User management with add/list functionality
 
 ---
 

@@ -221,20 +221,59 @@
 
 ## 👤 Epic 5: User Management (Admin)
 
-### US-011: Create New User [P1]
-**As a** System Administrator  
-**I want to** create user accounts for providers and payers  
-**So that** new staff can access the system
+### US-011: Create New User [P0]
+**As a** System Administrator
+**I want to** create user accounts for providers and payers
+**So that** new staff can access the system with proper security controls
 
 **Acceptance Criteria:**
 - Admin dashboard has "Add User" button
 - Form includes:
   - Email (unique, validated format)
-  - Role (Provider Staff, Payer Processor, Admin)
-  - Associated Organization (Provider or Payer)
-- Temporary password is auto-generated and shown once
-- User receives email with login credentials (future enhancement)
-- New user appears in admin user list
+  - First Name (required, 1-100 chars)
+  - Last Name (required, 1-100 chars)
+  - Role (Provider Staff or Payer Processor)
+  - Associated Organization (dropdown of Providers or Payers based on role)
+- Temporary password is auto-generated (12+ chars, mixed case, numbers, symbols)
+- On successful creation:
+  - Temporary password displayed once in modal with copy button
+  - Warning message: "Save this password - it will not be shown again"
+  - Admin manually shares temp password with new user (simulates email for POC)
+- New user appears in admin user list immediately
+- User list shows: Email, Name, Role, Organization, Status, Created Date
+- First-login flag set to TRUE for new users
+
+**First Login Flow:**
+- User logs in with email and temporary password
+- Immediately redirected to "Set New Password" page (cannot access system until password changed)
+- Set Password page requires:
+  - Current temporary password (validation)
+  - New password (min 8 chars, uppercase, lowercase, number)
+  - Confirm new password (must match)
+- After successful password change:
+  - First-login flag set to FALSE
+  - User redirected to role-appropriate dashboard
+  - Can now use system normally
+
+**Security Requirements:**
+- Only users with `admin` role can access admin dashboard
+- Non-admin users attempting to access admin routes get 403 Forbidden
+- Temporary passwords are hashed before storage (same as regular passwords)
+- First-login check enforced on every authenticated request
+- Audit log entry created when admin creates user
+
+**Validation Rules:**
+- Email: Required, valid format (RFC 5322), unique in database
+- First/Last Name: Required, 1-100 chars
+- Role: Required, must be "provider_staff" or "payer_processor"
+- Organization: Required, must be valid UUID from providers/payers table
+- Organization must match role type (provider_staff → provider, payer_processor → payer)
+
+**Edge Cases:**
+- Handle organization dropdown loading errors gracefully
+- Prevent duplicate submissions (disable button during API call)
+- If user closes modal without saving temp password, they cannot retrieve it
+- Admin can create a new account with same email if previous attempt failed
 
 ---
 
@@ -302,9 +341,9 @@
 
 ## 📊 MVP Story Summary
 
-**Total Stories:** 18  
-**MVP Scope (P0):** 10 stories  
-**Post-MVP (P1):** 2 stories  
+**Total Stories:** 18
+**MVP Scope (P0):** 11 stories
+**Post-MVP (P1):** 1 story
 **Future (P2):** 6 stories
 
 ### MVP Story Breakdown by Epic
@@ -312,10 +351,11 @@
 - Claims Submission: 3 stories
 - Claims Adjudication: 3 stories
 - Status Tracking: 2 stories
+- User Management: 1 story
 
 **Estimated MVP Complexity:**
 - Small (1-2 days): US-001, US-002, US-004, US-005, US-009
-- Medium (3-5 days): US-003, US-006, US-007, US-008
+- Medium (3-5 days): US-003, US-006, US-007, US-008, US-011
 - Large (5+ days): None in MVP
 
 ---
@@ -323,24 +363,25 @@
 ## 🎯 Development Order Recommendation
 
 **Sprint 1: Foundation (Week 1-2)**
-1. US-001: User Login
-2. US-002: Role-Based Access Control
-3. Database schema setup
+1. Database schema setup
+2. US-001: User Login
+3. US-002: Role-Based Access Control
+4. US-011: Create New User (Admin provisioning with temp password)
 
 **Sprint 2: Provider Flow (Week 3-4)**
-4. US-003: Submit New Claim
-5. US-004: View My Submitted Claims
-6. US-005: View Claim Details
+5. US-003: Submit New Claim
+6. US-004: View My Submitted Claims
+7. US-005: View Claim Details
 
 **Sprint 3: Payer Flow (Week 5-6)**
-7. US-006: View Claims Queue
-8. US-007: Approve Claim
-9. US-008: Deny Claim
+8. US-006: View Claims Queue
+9. US-007: Approve Claim
+10. US-008: Deny Claim
 
 **Sprint 4: Polish & Integration (Week 7-8)**
-10. US-009: Filter Claims by Status
-11. End-to-end testing
-12. Bug fixes and UI refinements
+11. US-009: Filter Claims by Status
+12. End-to-end testing
+13. Bug fixes and UI refinements
 
 ---
 

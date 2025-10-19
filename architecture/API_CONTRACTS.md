@@ -233,10 +233,81 @@ Get current authenticated user info.
     "role": "provider_staff",
     "first_name": "Sarah",
     "last_name": "Jones",
+    "is_first_login": false,
     "provider": {
       "id": "660f9500-f39c-52e5-b827-557766551111",
       "name": "Louisville Primary Care Clinic"
     }
+  }
+}
+```
+
+---
+
+### POST `/api/v1/auth/set-password`
+
+Set new password on first login (requires authentication with temporary password).
+
+**Authorization:** Valid session required
+
+**Request:**
+```json
+{
+  "current_password": "TempPass123!xyz",
+  "new_password": "MyNewSecurePass456!",
+  "confirm_password": "MyNewSecurePass456!"
+}
+```
+
+**Validation Rules:**
+- `current_password`: Required, must match user's current password
+- `new_password`: Required, min 8 chars, must contain uppercase, lowercase, and number
+- `confirm_password`: Required, must match `new_password`
+- `new_password` must be different from `current_password`
+
+**Success Response (200):**
+```json
+{
+  "message": "Password updated successfully",
+  "user": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "email": "newuser@example.com",
+    "role": "provider_staff",
+    "is_first_login": false
+  }
+}
+```
+
+**Error Response (400 - Invalid current password):**
+```json
+{
+  "error": {
+    "code": "INVALID_PASSWORD",
+    "message": "Current password is incorrect"
+  }
+}
+```
+
+**Error Response (400 - Validation errors):**
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid input data",
+    "details": {
+      "new_password": "Password must be at least 8 characters and contain uppercase, lowercase, and number",
+      "confirm_password": "Passwords do not match"
+    }
+  }
+}
+```
+
+**Error Response (400 - Same password):**
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "New password must be different from current password"
   }
 }
 ```
@@ -616,19 +687,148 @@ Get provider details (any authenticated user).
 
 ---
 
-## Admin Endpoints (Future)
+## Admin Endpoints
 
 ### GET `/api/v1/admin/users`
 
 List all users (Admin only).
 
+**Authorization:** User role must be `admin`
+
+**Query Parameters:**
+- `role` (optional): Filter by role (`provider_staff`, `payer_processor`, `admin`)
+- `is_active` (optional): Filter by active status (`true`, `false`)
+
+**Success Response (200):**
+```json
+{
+  "users": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "email": "sarah.jones@lpcc.com",
+      "role": "provider_staff",
+      "first_name": "Sarah",
+      "last_name": "Jones",
+      "is_active": true,
+      "is_first_login": false,
+      "organization": {
+        "id": "660f9500-f39c-52e5-b827-557766551111",
+        "name": "Louisville Primary Care Clinic",
+        "type": "provider"
+      },
+      "last_login": "2025-10-15T14:00:00Z",
+      "created_at": "2025-09-01T08:00:00Z"
+    }
+  ],
+  "total": 15
+}
+```
+
+**Error Response (403):**
+```json
+{
+  "error": {
+    "code": "FORBIDDEN",
+    "message": "Admin access required"
+  }
+}
+```
+
+---
+
 ### POST `/api/v1/admin/users`
 
-Create new user account (Admin only).
+Create new user account with temporary password (Admin only).
+
+**Authorization:** User role must be `admin`
+
+**Request:**
+```json
+{
+  "email": "newuser@example.com",
+  "first_name": "Jane",
+  "last_name": "Doe",
+  "role": "provider_staff",
+  "organization_id": "660f9500-f39c-52e5-b827-557766551111"
+}
+```
+
+**Field Descriptions:**
+- `email`: User's email address (will be used for login)
+- `first_name`: User's first name
+- `last_name`: User's last name
+- `role`: Either "provider_staff" or "payer_processor"
+- `organization_id`: UUID of the provider (if role=provider_staff) or payer (if role=payer_processor)
+
+**Validation Rules:**
+- `email`: Required, valid format, unique (not already registered)
+- `first_name`: Required, 1-100 chars
+- `last_name`: Required, 1-100 chars
+- `role`: Required, must be "provider_staff" or "payer_processor"
+- `organization_id`: Required, must be valid UUID of existing provider/payer matching role
+
+**Success Response (201 Created):**
+```json
+{
+  "message": "User created successfully",
+  "user": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "email": "newuser@example.com",
+    "role": "provider_staff",
+    "first_name": "Jane",
+    "last_name": "Doe",
+    "is_first_login": true,
+    "organization": {
+      "id": "660f9500-f39c-52e5-b827-557766551111",
+      "name": "Louisville Primary Care Clinic"
+    },
+    "created_at": "2025-10-19T10:30:00Z"
+  },
+  "temporary_password": "TempPass123!xyz"
+}
+```
+
+**Important:** The `temporary_password` is only returned once and cannot be retrieved later.
+
+**Error Response (409 Conflict - Email already exists):**
+```json
+{
+  "error": {
+    "code": "DUPLICATE_EMAIL",
+    "message": "An account with this email already exists"
+  }
+}
+```
+
+**Error Response (400 Bad Request - Validation errors):**
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid input data",
+    "details": {
+      "email": "Invalid email format",
+      "organization_id": "Organization not found or does not match role type"
+    }
+  }
+}
+```
+
+**Error Response (403):**
+```json
+{
+  "error": {
+    "code": "FORBIDDEN",
+    "message": "Admin access required"
+  }
+}
+```
+
+---
 
 ### GET `/api/v1/admin/audit-log`
 
-View full audit log (Admin only).
+View full audit log (Admin only) - Future enhancement.
 
 ---
 

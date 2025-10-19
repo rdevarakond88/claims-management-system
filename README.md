@@ -26,11 +26,12 @@ The Claims Management System models the interaction between:
 3. **CMS Proxy** (Centers for Medicare & Medicaid Services) — Receive forwarded claims for reimbursement
 
 ### Core Workflows (MVP Scope)
+- ✅ User Authentication & Admin Provisioning
 - ✅ Claims Submission
 - ✅ Claims Adjudication
+- ✅ Claims Status Tracking
 - 🔄 Eligibility Verification
 - 🔄 CMS Forwarding
-- 🔄 Claims Status Tracking
 
 ---
 
