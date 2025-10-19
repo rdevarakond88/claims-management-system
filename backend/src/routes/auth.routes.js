@@ -9,5 +9,6 @@ router.post('/logout', authController.logout);
 
 // Protected routes
 router.get('/me', requireAuth, authController.getCurrentUser);
+router.post('/set-password', requireAuth, authController.setPassword);
 
 module.exports = router;

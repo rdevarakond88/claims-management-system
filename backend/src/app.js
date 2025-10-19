@@ -6,6 +6,8 @@ const { PrismaClient } = require('@prisma/client');
 
 const authRoutes = require('./routes/auth.routes');
 const claimsRoutes = require('./routes/claims.routes');
+const adminRoutes = require('./routes/admin.routes');
+const { checkFirstLogin } = require('./middleware/firstLoginCheck');
 
 const app = express();
 const prisma = new PrismaClient();
@@ -35,8 +37,12 @@ app.use(session({
   name: 'cms_session'
 }));
 
+// Apply first login check to all routes except auth routes
+app.use(checkFirstLogin);
+
 // Routes
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/claims', claimsRoutes);
 
 // Health check endpoint
