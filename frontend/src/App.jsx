@@ -60,6 +60,17 @@ const AdminRoute = ({ children }) => {
   return children;
 };
 
+// Dashboard Redirect Component (redirect admin to admin panel, others to regular dashboard)
+const DashboardRedirect = () => {
+  const { user } = useAuth();
+
+  if (user?.role === 'admin') {
+    return <Navigate to="/admin" />;
+  }
+
+  return <Dashboard />;
+};
+
 // Public Route Component (redirect to dashboard if already logged in)
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -111,7 +122,7 @@ function App() {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <DashboardRedirect />
               </ProtectedRoute>
             }
           />

@@ -1,13 +1,16 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { authAPI } from '../services/api';
 
 const SetPasswordPage = () => {
   const { register, handleSubmit, watch, formState: { errors } } = useForm();
   const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { login, user } = useAuth();
 
   const newPassword = watch('new_password', '');
 
@@ -32,16 +35,31 @@ const SetPasswordPage = () => {
   const onSubmit = async (data) => {
     setIsLoading(true);
     setErrorMessage('');
+    setSuccessMessage('');
 
     try {
-      await authAPI.setPassword({
+      const response = await authAPI.setPassword({
         current_password: data.current_password,
         new_password: data.new_password,
         confirm_password: data.confirm_password
       });
 
-      // Success - redirect to dashboard
-      navigate('/dashboard');
+      // Update user in localStorage with isFirstLogin = false
+      if (user && response.user) {
+        login({
+          ...user,
+          isFirstLogin: false,
+          is_first_login: false
+        });
+      }
+
+      // Show success message
+      setSuccessMessage('Password updated successfully! Redirecting to dashboard...');
+
+      // Redirect after 2 seconds
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000);
     } catch (error) {
       console.error('Set password failed:', error);
 
@@ -57,7 +75,6 @@ const SetPasswordPage = () => {
       } else {
         setErrorMessage('Unable to connect to server. Please try again.');
       }
-    } finally {
       setIsLoading(false);
     }
   };
@@ -113,6 +130,26 @@ const SetPasswordPage = () => {
 
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* Success Message */}
+          {successMessage && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+              <div className="flex items-start">
+                <svg
+                  className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span className="text-sm font-medium">{successMessage}</span>
+              </div>
+            </div>
+          )}
+
           {/* Error Message */}
           {errorMessage && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">

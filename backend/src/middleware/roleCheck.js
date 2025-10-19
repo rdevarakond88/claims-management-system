@@ -4,7 +4,7 @@
  */
 function requireRole(...allowedRoles) {
   return (req, res, next) => {
-    if (!req.user) {
+    if (!req.session || !req.session.userRole) {
       return res.status(401).json({
         error: {
           code: 'UNAUTHORIZED',
@@ -13,7 +13,7 @@ function requireRole(...allowedRoles) {
       });
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
+    if (!allowedRoles.includes(req.session.userRole)) {
       return res.status(403).json({
         error: {
           code: 'FORBIDDEN',

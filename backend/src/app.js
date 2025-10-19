@@ -7,6 +7,7 @@ const { PrismaClient } = require('@prisma/client');
 const authRoutes = require('./routes/auth.routes');
 const claimsRoutes = require('./routes/claims.routes');
 const adminRoutes = require('./routes/admin.routes');
+const organizationRoutes = require('./routes/organization.routes');
 const { checkFirstLogin } = require('./middleware/firstLoginCheck');
 
 const app = express();
@@ -44,6 +45,7 @@ app.use(checkFirstLogin);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/claims', claimsRoutes);
+app.use('/api/v1', organizationRoutes);
 
 // Health check endpoint
 app.get('/api/v1/health', (req, res) => {

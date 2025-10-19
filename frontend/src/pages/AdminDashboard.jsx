@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { adminAPI, organizationAPI } from '../services/api';
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const [users, setUsers] = useState([]);
   const [providers, setProviders] = useState([]);
   const [payers, setPayers] = useState([]);
@@ -43,24 +47,15 @@ const AdminDashboard = () => {
 
   const fetchOrganizations = async () => {
     try {
-      // Note: You may need to implement these endpoints or fetch from existing data
-      // For now, we'll create mock data or handle gracefully
-      // const providersData = await organizationAPI.getProviders();
-      // const payersData = await organizationAPI.getPayers();
-      // setProviders(providersData.providers || []);
-      // setPayers(payersData.payers || []);
-
-      // Mock data for now (replace with actual API calls when endpoints exist)
-      setProviders([
-        { id: '1', name: 'Louisville Primary Care Clinic' },
-        { id: '2', name: 'Memorial Hospital' }
-      ]);
-      setPayers([
-        { id: '1', name: 'Humana Health' },
-        { id: '2', name: 'UnitedHealthcare' }
-      ]);
+      const providersData = await organizationAPI.getProviders();
+      const payersData = await organizationAPI.getPayers();
+      setProviders(providersData.providers || []);
+      setPayers(payersData.payers || []);
     } catch (error) {
       console.error('Failed to fetch organizations:', error);
+      // Fallback to empty arrays if API fails
+      setProviders([]);
+      setPayers([]);
     }
   };
 
@@ -141,15 +136,26 @@ const AdminDashboard = () => {
               <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
               <p className="mt-1 text-sm text-gray-500">Manage system users and permissions</p>
             </div>
-            <button
-              onClick={() => setShowAddUserModal(true)}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <svg className="mr-2 -ml-1 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Add User
-            </button>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setShowAddUserModal(true)}
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <svg className="mr-2 -ml-1 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Add User
+              </button>
+              <button
+                onClick={() => {
+                  logout();
+                  navigate('/login');
+                }}
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              >
+                Logout
+              </button>
+            </div>
           </div>
         </div>
       </div>
