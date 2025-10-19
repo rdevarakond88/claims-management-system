@@ -33,6 +33,9 @@ The Claims Management System models the interaction between:
 - 🔄 Eligibility Verification
 - 🔄 CMS Forwarding
 
+### Current Status: 70% Production-Ready
+See [Production Readiness Roadmap](./docs/PRODUCTION_READINESS.md) for detailed gap analysis and implementation plan.
+
 ---
 
 ## 📁 Repository Structure
@@ -72,6 +75,9 @@ cd claims-management-system
 All product and technical documentation lives in the `/docs` and `/architecture` folders:
 
 - **[PRD (Product Requirements Document)](./docs/PRD.md)** — Full product specification
+- **[Production Readiness Roadmap](./docs/PRODUCTION_READINESS.md)** — Implementation gaps and priority roadmap
+- **[User Stories](./docs/USER_STORIES.md)** — User scenarios and acceptance criteria
+- **[Admin User Provisioning Guide](./docs/ADMIN_USER_PROVISIONING.md)** — Implementation guide for user management
 - **[System Design](./architecture/SYSTEM_DESIGN.md)** — Architecture overview
 - **[Data Model](./architecture/DATA_MODEL.md)** — Database schema
 - **[API Contracts](./architecture/API_CONTRACTS.md)** — Endpoint specifications
@@ -91,19 +97,33 @@ Context files for AI assistants are stored in `/context-for-ai/`.
 
 ## 🛠️ Development Phases
 
-### Phase 1: Product Requirements ✅ (In Progress)
-- Define PRD with user personas, workflows, and acceptance criteria
-- Establish data models and API contracts
+### Phase 1: Product Requirements ✅ (Completed)
+- ✅ Define PRD with user personas, workflows, and acceptance criteria
+- ✅ Establish data models and API contracts
+- ✅ Create comprehensive documentation
 
-### Phase 2: MVP Development 🔄 (Next)
-- Build core submission and adjudication flows
-- Implement basic UI for providers and payers
-- Set up database and backend API
+### Phase 2: MVP Development ✅ (Completed)
+- ✅ Build core submission and adjudication flows
+- ✅ Implement UI for providers, payers, and admin
+- ✅ Set up PostgreSQL database with Prisma ORM
+- ✅ Build backend API with Express.js
+- ✅ Implement session-based authentication
+- ✅ Add admin user provisioning with temporary passwords
 
-### Phase 3: DevOps & Deployment 📋 (Planned)
+### Phase 3: Production Readiness 🔄 (In Progress - 70% Complete)
+**Next Steps:**
+1. Add logging & monitoring (Winston, Sentry)
+2. Implement rate limiting & security hardening
+3. Complete input sanitization & validation
+4. Environment configuration & deployment setup
+
+See [Production Readiness Roadmap](./docs/PRODUCTION_READINESS.md) for full details.
+
+### Phase 4: DevOps & Deployment 📋 (Planned)
 - Containerize with Docker
-- Set up CI/CD pipeline
+- Set up CI/CD pipeline (GitHub Actions)
 - Implement monitoring (Prometheus, Grafana)
+- Deploy to cloud (AWS/Heroku/Vercel)
 
 ---
 
