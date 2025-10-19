@@ -76,6 +76,7 @@ All product and technical documentation lives in the `/docs` and `/architecture`
 
 - **[PRD (Product Requirements Document)](./docs/PRD.md)** — Full product specification
 - **[Production Readiness Roadmap](./docs/PRODUCTION_READINESS.md)** — Implementation gaps and priority roadmap
+- **[Troubleshooting Log](./docs/TROUBLESHOOTING_LOG.md)** — Real issues found and resolved during development
 - **[User Stories](./docs/USER_STORIES.md)** — User scenarios and acceptance criteria
 - **[Admin User Provisioning Guide](./docs/ADMIN_USER_PROVISIONING.md)** — Implementation guide for user management
 - **[System Design](./architecture/SYSTEM_DESIGN.md)** — Architecture overview
