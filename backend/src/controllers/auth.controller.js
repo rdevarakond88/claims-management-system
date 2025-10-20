@@ -1,4 +1,5 @@
 const authService = require('../services/auth.service');
+const { logger, audit } = require('../utils/logger');
 
 /**
  * Login handler
@@ -24,6 +25,15 @@ const login = async (req, res) => {
     req.session.userId = user.id;
     req.session.userRole = user.role;
 
+    // Audit log successful login
+    audit('USER_LOGIN', user.id, {
+      email: user.email,
+      role: user.role,
+      ip: req.ip || req.connection.remoteAddress
+    });
+
+    logger.info(`User logged in: ${user.email} (${user.role})`);
+
     // Return user info
     return res.status(200).json({
       user: {
@@ -40,9 +50,16 @@ const login = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Login error:', error);
-    
+    logger.error('Login error:', { email: req.body.email, error: error.message });
+
     if (error.message === 'Invalid credentials' || error.message === 'Account is inactive') {
+      // Audit failed login attempt
+      audit('USER_LOGIN_FAILED', 'anonymous', {
+        email: req.body.email,
+        reason: error.message,
+        ip: req.ip || req.connection.remoteAddress
+      });
+
       return res.status(401).json({
         error: {
           code: 'INVALID_CREDENTIALS',
@@ -64,14 +81,25 @@ const login = async (req, res) => {
  * Logout handler
  */
 const logout = (req, res) => {
+  const userId = req.session.userId;
+
   req.session.destroy((err) => {
     if (err) {
+      logger.error('Logout error:', { userId, error: err.message });
       return res.status(500).json({
         error: {
           code: 'INTERNAL_ERROR',
           message: 'Failed to logout'
         }
       });
+    }
+
+    // Audit log logout
+    if (userId) {
+      audit('USER_LOGOUT', userId, {
+        ip: req.ip || req.connection.remoteAddress
+      });
+      logger.info(`User logged out: ${userId}`);
     }
 
     res.clearCookie('cms_session');
@@ -217,6 +245,15 @@ const setPassword = async (req, res) => {
       }
     });
 
+    // Audit log password change
+    audit('PASSWORD_CHANGED', user.id, {
+      email: user.email,
+      wasFirstLogin: user.isFirstLogin,
+      ip: req.ip || req.connection.remoteAddress
+    });
+
+    logger.info(`Password changed for user: ${user.email}`);
+
     return res.status(200).json({
       message: 'Password updated successfully',
       user: {
@@ -228,7 +265,7 @@ const setPassword = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Set password error:', error);
+    logger.error('Set password error:', { userId: req.session.userId, error: error.message });
     return res.status(500).json({
       error: {
         code: 'INTERNAL_ERROR',

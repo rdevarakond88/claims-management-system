@@ -1,4 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
+const { logger } = require('../utils/logger');
 const prisma = new PrismaClient();
 
 /**
@@ -23,7 +24,7 @@ const getProviders = async (req, res) => {
       providers
     });
   } catch (error) {
-    console.error('Get providers error:', error);
+    logger.error('Get providers error:', { error: error.message });
     return res.status(500).json({
       error: {
         code: 'INTERNAL_ERROR',
@@ -52,7 +53,7 @@ const getPayers = async (req, res) => {
       payers
     });
   } catch (error) {
-    console.error('Get payers error:', error);
+    logger.error('Get payers error:', { error: error.message });
     return res.status(500).json({
       error: {
         code: 'INTERNAL_ERROR',

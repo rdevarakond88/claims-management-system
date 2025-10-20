@@ -1,4 +1,5 @@
 const claimService = require('../services/claim.service');
+const { logger, audit } = require('../utils/logger');
 
 /**
  * Create new claim (Provider only)
@@ -48,10 +49,21 @@ const createClaim = async (req, res) => {
     // Create claim
     const claim = await claimService.createClaim(req.body, req.session.userId);
 
+    // Audit log claim submission
+    audit('CLAIM_SUBMITTED', req.session.userId, {
+      claimId: claim.id,
+      patientMemberId: patient.memberId,
+      billedAmount: service.billedAmount,
+      cptCode: service.cptCode,
+      ip: req.ip || req.connection.remoteAddress
+    });
+
+    logger.info(`Claim submitted: ${claim.id} by user ${req.session.userId}`);
+
     return res.status(201).json({ claim });
 
   } catch (error) {
-    console.error('Create claim error:', error);
+    logger.error('Create claim error:', { userId: req.session.userId, error: error.message });
 
     if (error.message === 'User must be associated with a provider') {
       return res.status(403).json({
@@ -95,7 +107,7 @@ const listClaims = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('List claims error:', error);
+    logger.error('List claims error:', { userId: req.session.userId, error: error.message });
     return res.status(500).json({
       error: {
         code: 'INTERNAL_ERROR',
@@ -121,7 +133,7 @@ const getClaimById = async (req, res) => {
     return res.status(200).json({ claim });
 
   } catch (error) {
-    console.error('Get claim error:', error);
+    logger.error('Get claim error:', { claimId: req.params.id, userId: req.session.userId, error: error.message });
 
     if (error.message === 'Claim not found') {
       return res.status(404).json({
@@ -254,10 +266,27 @@ const adjudicateClaim = async (req, res) => {
       adjudicationData
     );
 
+    // Audit log claim adjudication
+    if (decision === 'approve') {
+      audit('CLAIM_APPROVED', req.session.userId, {
+        claimId: id,
+        approvedAmount: approved_amount,
+        ip: req.ip || req.connection.remoteAddress
+      });
+      logger.info(`Claim approved: ${id} by user ${req.session.userId}, amount: ${approved_amount}`);
+    } else {
+      audit('CLAIM_DENIED', req.session.userId, {
+        claimId: id,
+        denialReasonCode: denial_reason_code,
+        ip: req.ip || req.connection.remoteAddress
+      });
+      logger.info(`Claim denied: ${id} by user ${req.session.userId}, reason: ${denial_reason_code}`);
+    }
+
     return res.status(200).json({ claim });
 
   } catch (error) {
-    console.error('Adjudicate claim error:', error);
+    logger.error('Adjudicate claim error:', { claimId: req.params.id, userId: req.session.userId, decision, error: error.message });
 
     if (error.message === 'Claim not found') {
       return res.status(404).json({

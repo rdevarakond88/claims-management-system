@@ -1,4 +1,5 @@
 const adminService = require('../services/admin.service');
+const { logger, audit } = require('../utils/logger');
 
 /**
  * List all users with optional filtering
@@ -13,12 +14,14 @@ const listUsers = async (req, res) => {
 
     const users = await adminService.getAllUsers(filters);
 
+    logger.info(`Admin listed users with filters: ${JSON.stringify(filters)}`);
+
     return res.status(200).json({
       users,
       total: users.length
     });
   } catch (error) {
-    console.error('List users error:', error);
+    logger.error('List users error:', { error: error.message, filters });
     return res.status(500).json({
       error: {
         code: 'INTERNAL_ERROR',
@@ -56,6 +59,17 @@ const createUser = async (req, res) => {
       organizationId: organization_id
     });
 
+    // Audit log user creation
+    audit('USER_CREATED', req.session.userId, {
+      newUserEmail: email,
+      newUserId: result.user.id,
+      role,
+      createdBy: req.session.userId,
+      ip: req.ip || req.connection.remoteAddress
+    });
+
+    logger.info(`Admin created new user: ${email} (${role})`);
+
     return res.status(201).json({
       message: 'User created successfully',
       user: result.user,
@@ -63,7 +77,7 @@ const createUser = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Create user error:', error);
+    logger.error('Create user error:', { email, role, error: error.message });
 
     if (error.code === 'DUPLICATE_EMAIL') {
       return res.status(409).json({
