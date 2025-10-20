@@ -1,7 +1,7 @@
 # Troubleshooting Log
 
-**Purpose:** Document real issues found during development and how they were resolved.  
-**Last Updated:** October 19, 2025
+**Purpose:** Document real issues found during development and how they were resolved.
+**Last Updated:** October 20, 2025
 
 ---
 
@@ -245,6 +245,54 @@
 - 📋 Schema validation before queries
 - 📋 Consistent auth patterns
 - 📋 Frontend/backend state sync checks
+
+---
+
+## Session 2: Role-Based UI Enhancement
+
+### Issue 8: Payer User Shown Submit Claim Button (Permission Error)
+**Reported by:** User
+**Severity:** Medium (UX/Security issue)
+
+**Problem:**
+- User logged in as payer (marcus.williams@humana.com - payer_processor role)
+- Dashboard showed "Submit New Claim" button
+- Clicking button navigated to claim submission form
+- Backend correctly blocked with "You do not have permission to access this resource" (403 Forbidden)
+- User confused why button was visible if they can't submit claims
+
+**Root Cause:**
+- Frontend Dashboard component was not role-aware
+- "Submit New Claim" button shown to all authenticated users regardless of role
+- Backend has proper role-based access control (requireRole(['provider_staff']))
+- Frontend missing corresponding UI logic
+
+**Solution:**
+1. Updated Dashboard title to be dynamic based on role (frontend/src/pages/Dashboard.jsx:123-131)
+   - Provider: "Provider Dashboard" / "Manage and track your submitted claims"
+   - Payer: "Payer Dashboard" / "Review and adjudicate submitted claims"
+
+2. Wrapped "Submit New Claim" button with role check (frontend/src/pages/Dashboard.jsx:153-176)
+   - Only visible when `user?.role === 'provider_staff'`
+   - Payer users see no submit button
+
+3. Updated empty state message (frontend/src/pages/Dashboard.jsx:203-215)
+   - Provider: "Get started by submitting your first claim" with button
+   - Payer: "No claims available for review at this time" without button
+
+**Files Changed:**
+- `frontend/src/pages/Dashboard.jsx` (3 edits for role-based UI)
+
+**Lesson Learned:**
+- Backend role enforcement alone is not enough
+- Frontend should hide/disable actions users can't perform
+- Better UX: Don't show forbidden actions vs showing error messages
+- Security principle: Defense in depth (frontend + backend validation)
+
+**Impact:**
+- Improved user experience for payer users
+- Reduced confusion and support requests
+- Cleaner UI with role-specific messaging
 
 ---
 

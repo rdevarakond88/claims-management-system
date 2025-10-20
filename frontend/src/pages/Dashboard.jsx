@@ -120,8 +120,14 @@ const Dashboard = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="mb-6">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Provider Dashboard</h2>
-          <p className="text-gray-600">Manage and track your submitted claims</p>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            {user?.role === 'provider_staff' ? 'Provider Dashboard' : 'Payer Dashboard'}
+          </h2>
+          <p className="text-gray-600">
+            {user?.role === 'provider_staff'
+              ? 'Manage and track your submitted claims'
+              : 'Review and adjudicate submitted claims'}
+          </p>
         </div>
 
         {/* Error Message */}
@@ -144,28 +150,30 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* Submit New Claim Button */}
-        <div className="mb-6">
-          <button
-            onClick={handleSubmitNewClaim}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm flex items-center"
-          >
-            <svg
-              className="w-5 h-5 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+        {/* Submit New Claim Button - Only for Provider Staff */}
+        {user?.role === 'provider_staff' && (
+          <div className="mb-6">
+            <button
+              onClick={handleSubmitNewClaim}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm flex items-center"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            Submit New Claim
-          </button>
-        </div>
+              <svg
+                className="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              Submit New Claim
+            </button>
+          </div>
+        )}
 
         {/* Claims Table */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -193,14 +201,18 @@ const Dashboard = () => {
               </svg>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">No claims yet</h3>
               <p className="text-gray-600 text-center mb-6">
-                Get started by submitting your first claim
+                {user?.role === 'provider_staff'
+                  ? 'Get started by submitting your first claim'
+                  : 'No claims available for review at this time'}
               </p>
-              <button
-                onClick={handleSubmitNewClaim}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-              >
-                Submit Your First Claim
-              </button>
+              {user?.role === 'provider_staff' && (
+                <button
+                  onClick={handleSubmitNewClaim}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  Submit Your First Claim
+                </button>
+              )}
             </div>
           ) : (
             // Claims Table
