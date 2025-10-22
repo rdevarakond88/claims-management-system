@@ -1,8 +1,9 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: 'http://localhost:3000/api/v1',
-  withCredentials: true,
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1',
+  timeout: 10000, // 10 second timeout
+  withCredentials: true, // CRITICAL: Include cookies for session management
   headers: {
     'Content-Type': 'application/json'
   }

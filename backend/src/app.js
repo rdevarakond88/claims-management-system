@@ -14,6 +14,7 @@ const { checkFirstLogin } = require('./middleware/firstLoginCheck');
 const { logger } = require('./utils/logger');
 const { globalLimiter, speedLimiter } = require('./middleware/security');
 const { sanitizeObject } = require('./utils/sanitize');
+const { redisStore } = require('./config/redis');
 
 const app = express();
 const prisma = new PrismaClient();
@@ -62,21 +63,31 @@ app.use((req, res, next) => {
 });
 
 // Session configuration
+// Use Redis store in production (Vercel), PostgreSQL in development
+const sessionStore = redisStore || new pgSession({
+  conString: process.env.DATABASE_URL,
+  createTableIfMissing: true
+});
+
+if (redisStore) {
+  logger.info('Using Redis session store (production mode)');
+} else {
+  logger.info('Using PostgreSQL session store (development mode)');
+}
+
 app.use(session({
-  store: new pgSession({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: true
-  }),
+  store: sessionStore,
   secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
   resave: false,
   saveUninitialized: false,
   cookie: {
     maxAge: 30 * 60 * 1000, // 30 minutes
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax'
+    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' required for cross-site cookies in production
   },
-  name: 'cms_session'
+  name: 'cms_session',
+  proxy: process.env.NODE_ENV === 'production' // Trust proxy in production (Vercel)
 }));
 
 // Apply first login check to all routes except auth routes
