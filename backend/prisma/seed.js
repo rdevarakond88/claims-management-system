@@ -35,6 +35,20 @@ async function main() {
   });
   console.log('✅ Created provider:', provider2.name);
 
+  const provider3 = await prisma.provider.upsert({
+    where: { npi: '1122334455' },
+    update: {},
+    create: {
+      name: 'Lakeview Primary Care Clinic',
+      npi: '1122334455',
+      city: 'Louisville',
+      state: 'KY',
+      phone: '(502) 555-0300',
+      email: 'contact@primarycare.com'
+    }
+  });
+  console.log('✅ Created provider:', provider3.name);
+
   // Create Payers
   const payer1 = await prisma.payer.upsert({
     where: { payerCode: 'HUM001' },
@@ -64,20 +78,40 @@ async function main() {
   });
   console.log('✅ Created payer:', payer2.name);
 
-  // Create Users
-  const passwordHash = await bcrypt.hash('password123', 10);
+  // Create Users with role-specific passwords matching TEST_CREDENTIALS.md
+  const adminPasswordHash = await bcrypt.hash('Admin123!', 10);
+  const providerPasswordHash = await bcrypt.hash('Provider123!', 10);
+  const payerPasswordHash = await bcrypt.hash('Payer123!', 10);
+
+  // Admin user
+  const adminUser = await prisma.user.upsert({
+    where: { email: 'admin@cms.com' },
+    update: { passwordHash: adminPasswordHash, isFirstLogin: false },
+    create: {
+      email: 'admin@cms.com',
+      passwordHash: adminPasswordHash,
+      role: 'admin',
+      firstName: 'System',
+      lastName: 'Administrator',
+      isFirstLogin: false,
+      isActive: true
+    }
+  });
+  console.log('✅ Created admin user:', adminUser.email);
 
   // Provider user 1
   const providerUser1 = await prisma.user.upsert({
     where: { email: 'sarah.jones@lpcc.com' },
-    update: {},
+    update: { passwordHash: providerPasswordHash, isFirstLogin: false },
     create: {
       email: 'sarah.jones@lpcc.com',
-      passwordHash,
+      passwordHash: providerPasswordHash,
       role: 'provider_staff',
       providerId: provider1.id,
       firstName: 'Sarah',
-      lastName: 'Jones'
+      lastName: 'Jones',
+      isFirstLogin: false,
+      isActive: true
     }
   });
   console.log('✅ Created provider user:', providerUser1.email);
@@ -85,29 +119,50 @@ async function main() {
   // Provider user 2
   const providerUser2 = await prisma.user.upsert({
     where: { email: 'john.smith@memorial.com' },
-    update: {},
+    update: { passwordHash: providerPasswordHash, isFirstLogin: false },
     create: {
       email: 'john.smith@memorial.com',
-      passwordHash,
+      passwordHash: providerPasswordHash,
       role: 'provider_staff',
       providerId: provider2.id,
       firstName: 'John',
-      lastName: 'Smith'
+      lastName: 'Smith',
+      isFirstLogin: false,
+      isActive: true
     }
   });
   console.log('✅ Created provider user:', providerUser2.email);
 
+  // Provider user 3
+  const providerUser3 = await prisma.user.upsert({
+    where: { email: 'doctor.smith@primarycare.com' },
+    update: { passwordHash: providerPasswordHash, isFirstLogin: false },
+    create: {
+      email: 'doctor.smith@primarycare.com',
+      passwordHash: providerPasswordHash,
+      role: 'provider_staff',
+      providerId: provider3.id,
+      firstName: 'John',
+      lastName: 'Smith',
+      isFirstLogin: false,
+      isActive: true
+    }
+  });
+  console.log('✅ Created provider user:', providerUser3.email);
+
   // Payer user 1
   const payerUser1 = await prisma.user.upsert({
     where: { email: 'marcus.williams@humana.com' },
-    update: {},
+    update: { passwordHash: payerPasswordHash, isFirstLogin: false },
     create: {
       email: 'marcus.williams@humana.com',
-      passwordHash,
+      passwordHash: payerPasswordHash,
       role: 'payer_processor',
       payerId: payer1.id,
       firstName: 'Marcus',
-      lastName: 'Williams'
+      lastName: 'Williams',
+      isFirstLogin: false,
+      isActive: true
     }
   });
   console.log('✅ Created payer user:', payerUser1.email);
@@ -115,24 +170,28 @@ async function main() {
   // Payer user 2
   const payerUser2 = await prisma.user.upsert({
     where: { email: 'lisa.chen@uhc.com' },
-    update: {},
+    update: { passwordHash: payerPasswordHash, isFirstLogin: false },
     create: {
       email: 'lisa.chen@uhc.com',
-      passwordHash,
+      passwordHash: payerPasswordHash,
       role: 'payer_processor',
       payerId: payer2.id,
       firstName: 'Lisa',
-      lastName: 'Chen'
+      lastName: 'Chen',
+      isFirstLogin: false,
+      isActive: true
     }
   });
   console.log('✅ Created payer user:', payerUser2.email);
 
   console.log('\n🎉 Database seed completed successfully!');
-  console.log('\n📝 Test Credentials:');
-  console.log('Provider: sarah.jones@lpcc.com / password123');
-  console.log('Provider: john.smith@memorial.com / password123');
-  console.log('Payer: marcus.williams@humana.com / password123');
-  console.log('Payer: lisa.chen@uhc.com / password123');
+  console.log('\n📝 Test Credentials (matches TEST_CREDENTIALS.md):');
+  console.log('Admin: admin@cms.com / Admin123!');
+  console.log('Provider: sarah.jones@lpcc.com / Provider123!');
+  console.log('Provider: john.smith@memorial.com / Provider123!');
+  console.log('Provider: doctor.smith@primarycare.com / Provider123!');
+  console.log('Payer: marcus.williams@humana.com / Payer123!');
+  console.log('Payer: lisa.chen@uhc.com / Payer123!');
 }
 
 main()

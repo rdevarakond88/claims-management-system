@@ -260,6 +260,29 @@ A system where:
 - Status transitions logged with timestamp and user
 - Audit trail queryable for compliance
 
+### FR-6: AI-Powered Claim Priority Categorization
+- **Objective:** Automatically categorize claims by priority to optimize payer review workflow
+- **Trigger:** Runs during claim submission (before database save)
+- **Priority Levels:**
+  - 🔴 **Urgent** — Emergency procedures, high-cost claims (>$5,000), critical diagnoses, time-sensitive treatments
+  - 🟡 **Standard** — Routine hospitalizations, moderate-cost procedures ($500-$5,000), non-emergency medically necessary care
+  - 🟢 **Routine** — Preventive care, annual checkups, low-cost procedures (<$500), non-urgent follow-ups
+- **AI Analysis Input:**
+  - CPT code (procedure type)
+  - ICD-10 code (diagnosis severity)
+  - Billed amount
+  - Clinical urgency indicators
+- **Business Rules:**
+  - Priority stored as part of claim record
+  - Payer dashboard sorts claims by priority (Urgent → Standard → Routine)
+  - Provider sees assigned priority in claim details
+  - If AI service fails, default to "Standard" priority and log error
+  - Categorization must complete within 2 seconds
+- **Success Criteria:**
+  - 95%+ AI categorization accuracy (validated against manual review sample)
+  - Payers process urgent claims within 24 hours
+  - Average time-to-payment reduced for high-priority claims
+
 ---
 
 ## 7. Non-Functional Requirements
@@ -291,31 +314,43 @@ A system where:
 
 ## 8. Data Requirements
 
-*(Detailed schema in `/architecture/DATA_MODEL.md`)*
+*(Detailed schema in `/docs/DATABASE_SCHEMA.md`)*
 
 ### Core Entities
 - **Users:** id, email, password_hash, role, provider_id/payer_id
 - **Providers:** id, name, npi, contact_info
 - **Payers:** id, name, contact_info
-- **Claims:** id, provider_id, patient_info, service_details, status, billed_amount, approved_amount, denial_reason, timestamps
+- **Claims:** id, provider_id, patient_info, service_details, status, **priority** (urgent/standard/routine), billed_amount, approved_amount, denial_reason, timestamps
 - **AuditLog:** id, claim_id, user_id, action, timestamp
+
+### Data Model Changes for AI Categorization
+- **Claims table** now includes `priority` field (enum: urgent, standard, routine)
+- Default priority value: "standard"
+- Indexed on (priority, created_at) for efficient payer queue sorting
+- AI categorization metadata logged in AuditLog for compliance
 
 ---
 
 ## 9. API Requirements
 
-*(Detailed specs in `/architecture/API_CONTRACTS.md`)*
+*(Detailed specs in `/docs/API_CONTRACTS.md`)*
 
 ### Endpoints (RESTful)
 - `POST /api/auth/login` — User authentication
 - `POST /api/auth/set-password` — Set new password on first login
-- `POST /api/claims` — Submit new claim
-- `GET /api/claims` — List claims (filtered by user role)
-- `GET /api/claims/:id` — Get claim details
+- `POST /api/claims` — Submit new claim **with AI priority categorization**
+- `GET /api/claims` — List claims (filtered by user role, **sorted by priority**)
+- `GET /api/claims/:id` — Get claim details (includes priority)
 - `PATCH /api/claims/:id/adjudicate` — Approve or deny claim
 - `GET /api/users/profile` — Get logged-in user info
 - `GET /api/admin/users` — List all users (admin only)
 - `POST /api/admin/users` — Create user with temp password (admin only)
+
+### AI Integration
+- **Internal Service:** AI Categorization Service
+- **Function:** `categorizeClaim(claimData)` → returns priority level with confidence score
+- **Provider:** Anthropic Claude API
+- **Fallback:** Default to "standard" priority on API failure
 
 ---
 
@@ -329,23 +364,41 @@ A system where:
 ### Key Screens
 1. **Login Page** — Simple form with email/password
 2. **Set Password Page** — First-login forced password change
-3. **Provider Dashboard** — List of claims with status badges
+3. **Provider Dashboard** — List of claims with status badges **and priority indicators**
 4. **Claims Submission Form** — Multi-section form with validation
-5. **Payer Claims Queue** — Sortable table with review actions
-6. **Claim Detail View** — Full claim data with status timeline
+5. **Payer Claims Queue** — Sortable table with review actions, **sorted by priority (Urgent → Standard → Routine)**
+6. **Claim Detail View** — Full claim data with status timeline **and priority badge**
 7. **Admin Dashboard** — User management with add/list functionality
+
+### UI Components for AI Categorization
+- **Priority Badge Component:**
+  - 🔴 Red badge for "Urgent" claims
+  - 🟡 Yellow badge for "Standard" claims
+  - 🟢 Green badge for "Routine" claims
+- **Payer Queue Enhancements:**
+  - Visual priority indicators in list view
+  - Default sort: priority (descending), then submission date
+  - Filter option to show only specific priority levels
+- **Provider Transparency:**
+  - Priority displayed in claim confirmation
+  - Priority visible in claim history view
+  - Tooltip explaining priority assignment rationale
 
 ---
 
 ## 11. Dependencies & Integrations
 
 ### MVP Phase
-- **None** — Standalone system with local database
+- **Anthropic Claude API** — AI-powered claim priority categorization
+  - API endpoint for text analysis
+  - Authentication via API key
+  - Rate limiting considerations
 
 ### Future Phases
 - **Eligibility API** — Integration with payer eligibility systems
 - **CMS Gateway** — Simulated forwarding to Medicare/Medicaid
 - **Email Service** — Notifications (SendGrid, AWS SES)
+- **Enhanced AI Features** — Historical learning, manual override capability, priority escalation rules
 
 ---
 
@@ -365,6 +418,13 @@ A system where:
 - Approval vs. denial rate
 - User login frequency
 
+### AI Categorization Metrics
+- **Accuracy:** 95%+ AI categorization accuracy (validated against manual review sample)
+- **Performance:** AI categorization completes within 2 seconds
+- **Business Impact:** Urgent claims processed within 24 hours (vs. baseline average)
+- **System Reliability:** AI service uptime >99.5%, graceful fallback to default priority
+- **Provider Satisfaction:** Positive feedback on categorization transparency
+
 ---
 
 ## 13. Risks & Mitigation
@@ -375,6 +435,9 @@ A system where:
 | Technical complexity overwhelms timeline | High | Low | Use AI-assisted development; simplify architecture |
 | Data model doesn't scale to real-world needs | Medium | Medium | Design with extensibility; allow for schema evolution |
 | Security vulnerabilities in MVP | Medium | Low | Follow basic security best practices; no real PHI |
+| AI categorization inaccurate or biased | High | Medium | Validate against manual sample set; implement override capability in future |
+| Anthropic API downtime impacts submissions | Medium | Low | Implement graceful fallback to "standard" priority; cache service |
+| AI service costs exceed budget | Low | Medium | Monitor API usage; implement rate limiting; use cost-effective model |
 
 ---
 
@@ -427,9 +490,5 @@ A system where:
 - CMS Claims Processing Manual
 - HIPAA Privacy and Security Rules
 - Standard EDI Transaction Sets (837, 835)
+- Anthropic Claude API Documentation (for AI categorization)
 
----
-
-**End of PRD Draft**
-
-*This document will be iteratively refined as we progress through requirements gathering and design phases.*

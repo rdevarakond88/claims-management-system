@@ -305,44 +305,141 @@
 ---
 
 ### US-014: CMS Forwarding
-**As a** Payer system  
-**I want to** automatically forward approved Medicare/Medicaid claims to CMS  
+**As a** Payer system
+**I want to** automatically forward approved Medicare/Medicaid claims to CMS
 **So that** we receive reimbursement from the government
 
 ---
 
-### US-015: Appeal Denied Claim
-**As a** Provider Claims Specialist  
-**I want to** submit an appeal for a denied claim with additional documentation  
+### US-015: AI-Powered Claim Priority Categorization [P0] 🆕
+**As a** Payer Claims Processor
+**I want** claims automatically categorized by priority level
+**So that** I can review urgent claims first and optimize processing efficiency
+
+**Acceptance Criteria:**
+
+✅ **AI Categorization During Submission:**
+- When a provider submits a claim, AI analyzes CPT code, ICD-10 code, and billed amount
+- AI assigns priority within 2 seconds: `urgent`, `standard`, or `routine`
+- Priority is stored in database before claim record is created
+- If AI service fails, claim defaults to "standard" priority with error logged
+- AI reasoning is stored for transparency
+
+✅ **Priority Levels:**
+- 🔴 **Urgent**: Emergency procedures (CPT 99281-99285), critical diagnoses, high-cost claims (>$5,000), time-sensitive treatments
+- 🟡 **Standard**: Routine hospitalizations, moderate-cost procedures ($500-$5,000), non-emergency medically necessary care
+- 🟢 **Routine**: Preventive care, annual checkups, low-cost procedures (<$500), non-urgent follow-ups
+
+✅ **Payer Queue Enhancements:**
+- Priority appears as a colored badge next to each claim in the queue
+- Queue automatically sorted by priority (Urgent → Standard → Routine), then by submission date
+- Payer can filter queue by specific priority level
+- Visual indicator for urgent claims that have been waiting >24 hours
+
+✅ **Provider Transparency:**
+- Provider sees assigned priority in claim confirmation message
+- Priority visible in claim details view with tooltip explaining reasoning
+- Priority badge shown in provider's claim list
+
+✅ **Audit Trail:**
+- All AI categorization decisions logged in audit_log table
+- Log includes: priority assigned, confidence score, reasoning, timestamp
+- Admin can review AI decisions for accuracy validation
+
+**Technical Requirements:**
+
+**Database Changes:**
+- Add `priority` field to Claims table (enum: 'urgent', 'standard', 'routine')
+- Default value: 'standard'
+- Create composite index on (priority, created_at) for efficient queue sorting
+- Add check constraint to validate priority values
+
+**Backend Changes:**
+- Create `aiCategorizationService` module with `categorizeClaim()` function
+- Integrate Anthropic Claude API for categorization
+- Update `POST /api/claims` endpoint to call AI service before saving claim
+- Implement graceful fallback on AI service failure
+- Add timeout (5 seconds max) for AI calls
+- Update `GET /api/claims` endpoint to sort by priority by default
+- Log all AI decisions in audit_log with details JSON
+
+**Frontend Changes:**
+- Add priority badge component (red/yellow/green with icons)
+- Update payer claims queue to display priority badges
+- Modify queue sorting logic to prioritize by priority level
+- Add priority filter dropdown to queue view
+- Show priority in claim detail view with reasoning tooltip
+- Display priority in provider claim confirmation screen
+
+**Test Scenarios:**
+
+1. **Emergency claim** (CPT 99285, ICD-10 I21.9 [heart attack], $8,500)
+   → Should categorize as **Urgent** with high confidence
+
+2. **Routine checkup** (CPT 99213, ICD-10 Z00.00 [general exam], $150)
+   → Should categorize as **Routine**
+
+3. **Standard procedure** (CPT 70450 [CT scan], ICD-10 R51 [headache], $800)
+   → Should categorize as **Standard**
+
+4. **API failure** (Network timeout or service error)
+   → Should default to **Standard**, log error, continue claim submission without blocking
+
+5. **High-cost non-emergency** (CPT 27447 [knee replacement], ICD-10 M17.11 [osteoarthritis], $25,000)
+   → Should categorize as **Urgent** due to high cost despite non-emergency nature
+
+**Success Metrics:**
+- 95%+ AI categorization accuracy (validated against manual review sample of 50 claims)
+- Payers process urgent claims within 24 hours (vs. baseline average of 3-5 days)
+- Average time-to-payment reduced by 30% for high-priority claims
+- Provider satisfaction score for categorization transparency >4/5
+- AI service uptime >99.5% with graceful fallback
+
+**Dependencies:**
+- Anthropic Claude API access and API key
+- Database migration completed before deployment
+- UI component library supports colored badges
+
+**Future Enhancements:**
+- Manual override capability for payers to change priority
+- Historical learning (improve AI based on adjudication outcomes)
+- Priority escalation rules (auto-escalate claims aging >7 days)
+- Batch re-categorization tool for admin users
+
+---
+
+### US-016: Appeal Denied Claim
+**As a** Provider Claims Specialist
+**I want to** submit an appeal for a denied claim with additional documentation
 **So that** I can get claims reconsidered
 
 ---
 
-### US-016: Bulk Claim Upload
-**As a** Provider Claims Specialist  
-**I want to** upload multiple claims via CSV file  
+### US-017: Bulk Claim Upload
+**As a** Provider Claims Specialist
+**I want to** upload multiple claims via CSV file
 **So that** I can submit high volumes efficiently
 
 ---
 
-### US-017: Email Notifications
-**As a** Provider Claims Specialist  
-**I want to** receive email alerts when my claims are adjudicated  
+### US-018: Email Notifications
+**As a** Provider Claims Specialist
+**I want to** receive email alerts when my claims are adjudicated
 **So that** I don't have to constantly check the portal
 
 ---
 
-### US-018: Analytics Dashboard
-**As a** Payer Manager  
-**I want to** see aggregate metrics (approval rate, avg processing time, denial reasons)  
+### US-019: Analytics Dashboard
+**As a** Payer Manager
+**I want to** see aggregate metrics (approval rate, avg processing time, denial reasons)
 **So that** I can identify process improvements
 
 ---
 
 ## 📊 MVP Story Summary
 
-**Total Stories:** 18
-**MVP Scope (P0):** 11 stories
+**Total Stories:** 19 (updated with AI categorization)
+**MVP Scope (P0):** 12 stories (includes US-015: AI Categorization)
 **Post-MVP (P1):** 1 story
 **Future (P2):** 6 stories
 
@@ -352,11 +449,12 @@
 - Claims Adjudication: 3 stories
 - Status Tracking: 2 stories
 - User Management: 1 story
+- AI Features: 1 story 🆕
 
 **Estimated MVP Complexity:**
 - Small (1-2 days): US-001, US-002, US-004, US-005, US-009
 - Medium (3-5 days): US-003, US-006, US-007, US-008, US-011
-- Large (5+ days): None in MVP
+- Large (5-7 days): US-015 (AI Categorization) 🆕
 
 ---
 
@@ -378,10 +476,15 @@
 9. US-007: Approve Claim
 10. US-008: Deny Claim
 
-**Sprint 4: Polish & Integration (Week 7-8)**
-11. US-009: Filter Claims by Status
-12. End-to-end testing
-13. Bug fixes and UI refinements
+**Sprint 4: AI Integration & Polish (Week 7-9)** 🆕
+11. US-015: AI-Powered Claim Priority Categorization
+    - Database migration for priority field
+    - AI service integration
+    - UI updates for priority badges
+    - Testing and validation
+12. US-009: Filter Claims by Status (including priority filter)
+13. End-to-end testing with AI categorization
+14. Bug fixes and UI refinements
 
 ---
 
