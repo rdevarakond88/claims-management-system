@@ -184,6 +184,273 @@ async function main() {
   });
   console.log('✅ Created payer user:', payerUser2.email);
 
+  // Create Claims with realistic priorities
+  console.log('\n📋 Creating sample claims with AI-style priorities...');
+
+  // URGENT CLAIMS - Emergency procedures, critical diagnoses, high cost
+  const urgentClaim1 = await prisma.claim.create({
+    data: {
+      claimNumber: 'CLM-20251015-0001',
+      providerId: provider2.id,
+      submittedByUserId: providerUser2.id,
+      status: 'submitted',
+      priority: 'URGENT',
+      priorityConfidence: 0.95,
+      priorityReasoning: 'Emergency department visit for acute myocardial infarction (heart attack) with high cost',
+      patientFirstName: 'Robert',
+      patientLastName: 'Johnson',
+      patientDob: new Date('1965-03-15'),
+      patientMemberId: 'MEM987654321',
+      cptCode: '99285', // Emergency department visit, high severity
+      icd10Code: 'I21.9', // Acute myocardial infarction
+      serviceDate: new Date('2025-10-15'),
+      billedAmount: 8500.00,
+      submittedAt: new Date('2025-10-15T14:30:00Z')
+    }
+  });
+  console.log('✅ Created URGENT claim:', urgentClaim1.claimNumber);
+
+  const urgentClaim2 = await prisma.claim.create({
+    data: {
+      claimNumber: 'CLM-20251020-0002',
+      providerId: provider2.id,
+      submittedByUserId: providerUser2.id,
+      status: 'submitted',
+      priority: 'URGENT',
+      priorityConfidence: 0.92,
+      priorityReasoning: 'Emergency visit for severe trauma with multiple procedures required',
+      patientFirstName: 'Maria',
+      patientLastName: 'Garcia',
+      patientDob: new Date('1978-08-22'),
+      patientMemberId: 'MEM123456789',
+      cptCode: '99284', // Emergency department visit, high severity
+      icd10Code: 'S72.001A', // Fracture of femur, initial encounter
+      serviceDate: new Date('2025-10-20'),
+      billedAmount: 12500.00,
+      submittedAt: new Date('2025-10-20T16:45:00Z')
+    }
+  });
+  console.log('✅ Created URGENT claim:', urgentClaim2.claimNumber);
+
+  const urgentClaim3 = await prisma.claim.create({
+    data: {
+      claimNumber: 'CLM-20251025-0003',
+      providerId: provider1.id,
+      submittedByUserId: providerUser1.id,
+      status: 'submitted',
+      priority: 'URGENT',
+      priorityConfidence: 0.88,
+      priorityReasoning: 'High-cost surgical procedure for critical condition',
+      patientFirstName: 'James',
+      patientLastName: 'Wilson',
+      patientDob: new Date('1952-11-30'),
+      patientMemberId: 'MEM555666777',
+      cptCode: '27447', // Total knee arthroplasty
+      icd10Code: 'M17.11', // Unilateral primary osteoarthritis, right knee
+      serviceDate: new Date('2025-10-25'),
+      billedAmount: 25000.00,
+      submittedAt: new Date('2025-10-25T09:15:00Z')
+    }
+  });
+  console.log('✅ Created URGENT claim:', urgentClaim3.claimNumber);
+
+  // STANDARD CLAIMS - Routine hospitalizations, moderate procedures
+  const standardClaim1 = await prisma.claim.create({
+    data: {
+      claimNumber: 'CLM-20251018-0004',
+      providerId: provider1.id,
+      submittedByUserId: providerUser1.id,
+      status: 'submitted',
+      priority: 'STANDARD',
+      priorityConfidence: 0.85,
+      priorityReasoning: 'Diagnostic imaging procedure with moderate cost, non-urgent condition',
+      patientFirstName: 'Emily',
+      patientLastName: 'Brown',
+      patientDob: new Date('1990-05-12'),
+      patientMemberId: 'MEM111222333',
+      cptCode: '70450', // CT scan of head without contrast
+      icd10Code: 'R51', // Headache
+      serviceDate: new Date('2025-10-18'),
+      billedAmount: 850.00,
+      submittedAt: new Date('2025-10-18T11:20:00Z')
+    }
+  });
+  console.log('✅ Created STANDARD claim:', standardClaim1.claimNumber);
+
+  const standardClaim2 = await prisma.claim.create({
+    data: {
+      claimNumber: 'CLM-20251022-0005',
+      providerId: provider3.id,
+      submittedByUserId: providerUser3.id,
+      status: 'submitted',
+      priority: 'STANDARD',
+      priorityConfidence: 0.82,
+      priorityReasoning: 'Established patient office visit for chronic condition management',
+      patientFirstName: 'Michael',
+      patientLastName: 'Davis',
+      patientDob: new Date('1968-07-08'),
+      patientMemberId: 'MEM444555666',
+      cptCode: '99214', // Office visit, established patient, moderate complexity
+      icd10Code: 'E11.9', // Type 2 diabetes without complications
+      serviceDate: new Date('2025-10-22'),
+      billedAmount: 175.00,
+      submittedAt: new Date('2025-10-22T10:30:00Z')
+    }
+  });
+  console.log('✅ Created STANDARD claim:', standardClaim2.claimNumber);
+
+  const standardClaim3 = await prisma.claim.create({
+    data: {
+      claimNumber: 'CLM-20251024-0006',
+      providerId: provider2.id,
+      submittedByUserId: providerUser2.id,
+      status: 'approved',
+      priority: 'STANDARD',
+      priorityConfidence: 0.79,
+      priorityReasoning: 'Laboratory tests for ongoing treatment monitoring',
+      patientFirstName: 'Jennifer',
+      patientLastName: 'Martinez',
+      patientDob: new Date('1985-02-18'),
+      patientMemberId: 'MEM777888999',
+      cptCode: '80053', // Comprehensive metabolic panel
+      icd10Code: 'I10', // Essential hypertension
+      serviceDate: new Date('2025-10-24'),
+      billedAmount: 125.00,
+      approvedAmount: 125.00,
+      adjudicatedByUserId: payerUser1.id,
+      adjudicatedAt: new Date('2025-10-26T14:00:00Z'),
+      submittedAt: new Date('2025-10-24T13:45:00Z')
+    }
+  });
+  console.log('✅ Created STANDARD claim (approved):', standardClaim3.claimNumber);
+
+  // ROUTINE CLAIMS - Preventive care, annual checkups, low-cost procedures
+  const routineClaim1 = await prisma.claim.create({
+    data: {
+      claimNumber: 'CLM-20251016-0007',
+      providerId: provider1.id,
+      submittedByUserId: providerUser1.id,
+      status: 'approved',
+      priority: 'ROUTINE',
+      priorityConfidence: 0.91,
+      priorityReasoning: 'Preventive annual wellness visit, standard screening',
+      patientFirstName: 'Sarah',
+      patientLastName: 'Anderson',
+      patientDob: new Date('1975-09-25'),
+      patientMemberId: 'MEM222333444',
+      cptCode: '99395', // Periodic comprehensive preventive medicine, age 40-64
+      icd10Code: 'Z00.00', // Encounter for general adult medical examination
+      serviceDate: new Date('2025-10-16'),
+      billedAmount: 200.00,
+      approvedAmount: 200.00,
+      adjudicatedByUserId: payerUser1.id,
+      adjudicatedAt: new Date('2025-10-18T10:00:00Z'),
+      submittedAt: new Date('2025-10-16T09:00:00Z')
+    }
+  });
+  console.log('✅ Created ROUTINE claim (approved):', routineClaim1.claimNumber);
+
+  const routineClaim2 = await prisma.claim.create({
+    data: {
+      claimNumber: 'CLM-20251019-0008',
+      providerId: provider3.id,
+      submittedByUserId: providerUser3.id,
+      status: 'submitted',
+      priority: 'ROUTINE',
+      priorityConfidence: 0.94,
+      priorityReasoning: 'Basic office visit for minor acute condition, low cost',
+      patientFirstName: 'David',
+      patientLastName: 'Thompson',
+      patientDob: new Date('1995-12-05'),
+      patientMemberId: 'MEM666777888',
+      cptCode: '99213', // Office visit, established patient, low to moderate complexity
+      icd10Code: 'J06.9', // Acute upper respiratory infection
+      serviceDate: new Date('2025-10-19'),
+      billedAmount: 150.00,
+      submittedAt: new Date('2025-10-19T15:30:00Z')
+    }
+  });
+  console.log('✅ Created ROUTINE claim:', routineClaim2.claimNumber);
+
+  const routineClaim3 = await prisma.claim.create({
+    data: {
+      claimNumber: 'CLM-20251021-0009',
+      providerId: provider1.id,
+      submittedByUserId: providerUser1.id,
+      status: 'submitted',
+      priority: 'ROUTINE',
+      priorityConfidence: 0.89,
+      priorityReasoning: 'Preventive vaccination service, very low cost',
+      patientFirstName: 'Lisa',
+      patientLastName: 'White',
+      patientDob: new Date('1988-04-14'),
+      patientMemberId: 'MEM333444555',
+      cptCode: '90471', // Immunization administration
+      icd10Code: 'Z23', // Encounter for immunization
+      serviceDate: new Date('2025-10-21'),
+      billedAmount: 45.00,
+      submittedAt: new Date('2025-10-21T14:15:00Z')
+    }
+  });
+  console.log('✅ Created ROUTINE claim:', routineClaim3.claimNumber);
+
+  const routineClaim4 = await prisma.claim.create({
+    data: {
+      claimNumber: 'CLM-20251023-0010',
+      providerId: provider3.id,
+      submittedByUserId: providerUser3.id,
+      status: 'denied',
+      priority: 'ROUTINE',
+      priorityConfidence: 0.87,
+      priorityReasoning: 'Follow-up visit for resolved minor condition',
+      patientFirstName: 'Kevin',
+      patientLastName: 'Lee',
+      patientDob: new Date('2000-06-30'),
+      patientMemberId: 'MEM888999000',
+      cptCode: '99212', // Office visit, established patient, straightforward
+      icd10Code: 'L60.0', // Ingrown nail
+      serviceDate: new Date('2025-10-23'),
+      billedAmount: 95.00,
+      denialReasonCode: 'CO-16',
+      denialExplanation: 'Claim lacks information needed for adjudication',
+      adjudicatedByUserId: payerUser2.id,
+      adjudicatedAt: new Date('2025-10-25T11:30:00Z'),
+      submittedAt: new Date('2025-10-23T08:45:00Z')
+    }
+  });
+  console.log('✅ Created ROUTINE claim (denied):', routineClaim4.claimNumber);
+
+  // Create audit logs for adjudicated claims
+  await prisma.auditLog.createMany({
+    data: [
+      {
+        claimId: standardClaim3.id,
+        userId: payerUser1.id,
+        action: 'claim_approved',
+        oldStatus: 'submitted',
+        newStatus: 'approved',
+        details: { approvedAmount: 125.00, note: 'All documentation provided' }
+      },
+      {
+        claimId: routineClaim1.id,
+        userId: payerUser1.id,
+        action: 'claim_approved',
+        oldStatus: 'submitted',
+        newStatus: 'approved',
+        details: { approvedAmount: 200.00, note: 'Preventive care covered' }
+      },
+      {
+        claimId: routineClaim4.id,
+        userId: payerUser2.id,
+        action: 'claim_denied',
+        oldStatus: 'submitted',
+        newStatus: 'denied',
+        details: { denialReason: 'Missing required documentation' }
+      }
+    ]
+  });
+  console.log('✅ Created audit logs for adjudicated claims');
+
   console.log('\n🎉 Database seed completed successfully!');
   console.log('\n📝 Test Credentials (matches TEST_CREDENTIALS.md):');
   console.log('Admin: admin@cms.com / Admin123!');

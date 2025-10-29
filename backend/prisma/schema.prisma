@@ -67,6 +67,9 @@ model Claim {
   providerId          String     @map("provider_id")
   submittedByUserId   String     @map("submitted_by_user_id")
   status              String     @default("submitted")
+  priority            Priority   @default(STANDARD)
+  priorityConfidence  Decimal?   @map("priority_confidence") @db.Decimal(3, 2)
+  priorityReasoning   String?    @map("priority_reasoning") @db.Text
   patientFirstName    String     @map("patient_first_name")
   patientLastName     String     @map("patient_last_name")
   patientDob          DateTime   @map("patient_dob") @db.Date
@@ -89,6 +92,7 @@ model Claim {
   provider            Provider   @relation(fields: [providerId], references: [id])
   submittedBy         User       @relation("SubmittedBy", fields: [submittedByUserId], references: [id])
 
+  @@index([priority, createdAt])
   @@map("claims")
 }
 
@@ -113,4 +117,10 @@ model session {
   expire DateTime @db.Timestamp(6)
 
   @@index([expire], map: "IDX_session_expire")
+}
+
+enum Priority {
+  URGENT
+  STANDARD
+  ROUTINE
 }

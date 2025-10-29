@@ -88,11 +88,15 @@ const createClaim = async (req, res) => {
  */
 const listClaims = async (req, res) => {
   try {
-    const { status } = req.query;
+    const { status, priority } = req.query;
     const filters = {};
 
     if (status) {
       filters.status = status;
+    }
+
+    if (priority) {
+      filters.priority = priority;
     }
 
     const claims = await claimService.listClaims(

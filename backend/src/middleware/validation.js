@@ -270,6 +270,19 @@ const commonSchemas = {
       .optional()
   }),
 
+  claimFilters: Joi.object({
+    status: Joi.string()
+      .valid('draft', 'submitted', 'approved', 'denied', 'pending')
+      .optional(),
+    priority: Joi.string()
+      .valid('urgent', 'standard', 'routine', 'URGENT', 'STANDARD', 'ROUTINE')
+      .uppercase()
+      .optional()
+      .messages({
+        'any.only': 'Priority must be one of: urgent, standard, routine'
+      })
+  }),
+
   userFilters: Joi.object({
     role: Joi.string().valid('admin', 'provider_staff', 'payer_processor').optional(),
     is_active: Joi.boolean().optional()

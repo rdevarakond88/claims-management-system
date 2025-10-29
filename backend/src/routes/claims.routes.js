@@ -11,7 +11,7 @@ router.use(requireAuth);
 router.post('/', requireRole(['provider_staff']), validate('createClaim'), claimsController.createClaim);
 
 // List claims (Provider sees their claims, Payer sees all)
-router.get('/', validateQuery(commonSchemas.claimStatus), claimsController.listClaims);
+router.get('/', validateQuery(commonSchemas.claimFilters), claimsController.listClaims);
 
 // Adjudicate claim (Payer only)
 router.patch('/:id/adjudicate', requireRole(['payer_processor']), validateParams(commonSchemas.uuid), validate('adjudicateClaim'), claimsController.adjudicateClaim);

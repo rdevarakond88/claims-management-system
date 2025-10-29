@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../api/client';
+import PriorityBadge from '../components/PriorityBadge';
+import PriorityFilter from '../components/PriorityFilter';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -9,17 +11,31 @@ const Dashboard = () => {
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedPriority, setSelectedPriority] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
 
   useEffect(() => {
     fetchClaims();
-  }, []);
+  }, [selectedPriority, selectedStatus]);
 
   const fetchClaims = async () => {
     setLoading(true);
     setError('');
 
     try {
-      const response = await apiClient.get('/claims');
+      // Build query params
+      const params = new URLSearchParams();
+      if (selectedStatus !== 'all') {
+        params.append('status', selectedStatus);
+      }
+      if (selectedPriority !== 'all') {
+        params.append('priority', selectedPriority);
+      }
+
+      const queryString = params.toString();
+      const url = queryString ? `/claims?${queryString}` : '/claims';
+
+      const response = await apiClient.get(url);
 
       setClaims(response.data.claims || []);
     } catch (err) {
@@ -150,12 +166,13 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* Submit New Claim Button - Only for Provider Staff */}
-        {user?.role === 'provider_staff' && (
-          <div className="mb-6">
+        {/* Action Bar */}
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          {/* Submit New Claim Button - Only for Provider Staff */}
+          {user?.role === 'provider_staff' && (
             <button
               onClick={handleSubmitNewClaim}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm flex items-center"
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm flex items-center justify-center"
             >
               <svg
                 className="w-5 h-5 mr-2"
@@ -172,8 +189,35 @@ const Dashboard = () => {
               </svg>
               Submit New Claim
             </button>
+          )}
+
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            {/* Status Filter */}
+            <div className="inline-flex items-center gap-2">
+              <label htmlFor="status-filter" className="text-sm font-medium text-gray-700">
+                Status:
+              </label>
+              <select
+                id="status-filter"
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 pr-10 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+              >
+                <option value="all">All Statuses</option>
+                <option value="submitted">Submitted</option>
+                <option value="approved">Approved</option>
+                <option value="denied">Denied</option>
+              </select>
+            </div>
+
+            {/* Priority Filter */}
+            <PriorityFilter
+              selectedPriority={selectedPriority}
+              onPriorityChange={setSelectedPriority}
+            />
           </div>
-        )}
+        </div>
 
         {/* Claims Table */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -236,6 +280,12 @@ const Dashboard = () => {
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
+                      Priority
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
                       Service Date
                     </th>
                     <th
@@ -270,6 +320,18 @@ const Dashboard = () => {
                         <div className="text-sm text-gray-900">
                           {claim.patientName || 'N/A'}
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {claim.priority ? (
+                          <PriorityBadge
+                            priority={claim.priority}
+                            confidence={claim.priorityConfidence}
+                            showConfidence={user?.role === 'payer_processor'}
+                            size="sm"
+                          />
+                        ) : (
+                          <span className="text-xs text-gray-400">N/A</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">

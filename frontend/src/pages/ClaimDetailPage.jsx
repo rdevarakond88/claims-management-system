@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from "../api/client";
 import { useAuth } from '../contexts/AuthContext';
+import PriorityBadge from '../components/PriorityBadge';
 
 const ClaimDetailPage = () => {
   const { id } = useParams();
@@ -328,6 +329,57 @@ const ClaimDetailPage = () => {
             </div>
           </div>
         </div>
+
+        {/* AI Priority Categorization */}
+        {claim.priority && (
+          <div className="bg-white shadow rounded-lg p-6 mb-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <svg className="h-5 w-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              AI Priority Categorization
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-2">Priority Level</p>
+                <PriorityBadge
+                  priority={claim.priority}
+                  confidence={claim.priorityConfidence}
+                  showConfidence={true}
+                  size="lg"
+                />
+              </div>
+              {claim.priorityConfidence !== null && claim.priorityConfidence !== undefined && (
+                <div>
+                  <p className="text-sm font-medium text-gray-500">AI Confidence</p>
+                  <div className="mt-2 flex items-center">
+                    <div className="flex-1 bg-gray-200 rounded-full h-2.5">
+                      <div
+                        className={`h-2.5 rounded-full ${
+                          claim.priorityConfidence >= 0.9 ? 'bg-blue-600' :
+                          claim.priorityConfidence >= 0.7 ? 'bg-blue-400' :
+                          'bg-orange-400'
+                        }`}
+                        style={{ width: `${claim.priorityConfidence * 100}%` }}
+                      ></div>
+                    </div>
+                    <span className="ml-3 text-sm font-medium text-gray-900">
+                      {Math.round(claim.priorityConfidence * 100)}%
+                    </span>
+                  </div>
+                </div>
+              )}
+              {claim.priorityReasoning && (
+                <div>
+                  <p className="text-sm font-medium text-gray-500">AI Reasoning</p>
+                  <div className="mt-2 bg-blue-50 border border-blue-200 rounded-md p-3">
+                    <p className="text-sm text-blue-900 italic">{claim.priorityReasoning}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Adjudication Actions - Only show for payers on submitted claims */}
         {canAdjudicate && (

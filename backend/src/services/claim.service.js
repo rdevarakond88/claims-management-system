@@ -1,4 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
+const { categorizeClaim } = require('./ai-categorization.service');
 const prisma = new PrismaClient();
 
 /**
@@ -56,6 +57,16 @@ const createClaim = async (claimData, userId) => {
   // Generate claim number
   const claimNumber = await generateClaimNumber();
 
+  // AI-powered priority categorization
+  console.log('[Claim Service] Categorizing claim with AI...');
+  const aiCategorization = await categorizeClaim({
+    cptCode: service.cptCode,
+    icd10Code: service.icd10Code,
+    billedAmount: service.billedAmount,
+    patientDob: patient.dateOfBirth ? new Date(patient.dateOfBirth) : null
+  });
+  console.log(`[Claim Service] AI categorization: ${aiCategorization.priority} (confidence: ${aiCategorization.confidence})`);
+
   // Create claim in a transaction (claim + audit log)
   const claim = await prisma.$transaction(async (tx) => {
     // Create the claim
@@ -65,6 +76,9 @@ const createClaim = async (claimData, userId) => {
         providerId: user.providerId,
         submittedByUserId: userId,
         status: 'submitted',
+        priority: aiCategorization.priority,
+        priorityConfidence: aiCategorization.confidence,
+        priorityReasoning: aiCategorization.reasoning,
         patientFirstName: patient.firstName,
         patientLastName: patient.lastName,
         patientDob: new Date(patient.dateOfBirth),
@@ -96,7 +110,12 @@ const createClaim = async (claimData, userId) => {
         newStatus: 'submitted',
         details: {
           claimNumber: newClaim.claimNumber,
-          billedAmount: service.billedAmount.toString()
+          billedAmount: service.billedAmount.toString(),
+          aiCategorization: {
+            priority: aiCategorization.priority,
+            confidence: aiCategorization.confidence,
+            reasoning: aiCategorization.reasoning
+          }
         }
       }
     });
@@ -111,7 +130,7 @@ const createClaim = async (claimData, userId) => {
  * Get claims list for a user (filtered by role)
  * @param {string} userId - User ID
  * @param {string} userRole - User role
- * @param {Object} filters - Optional filters (status, dateRange)
+ * @param {Object} filters - Optional filters (status, priority, dateRange)
  * @returns {Array} List of claims
  */
 const listClaims = async (userId, userRole, filters = {}) => {
@@ -133,7 +152,12 @@ const listClaims = async (userId, userRole, filters = {}) => {
     where.status = filters.status;
   }
 
-  // Get claims
+  // Apply priority filter if provided
+  if (filters.priority) {
+    where.priority = filters.priority.toUpperCase(); // Ensure uppercase for enum
+  }
+
+  // Get claims with priority-based sorting
   const claims = await prisma.claim.findMany({
     where,
     include: {
@@ -151,9 +175,15 @@ const listClaims = async (userId, userRole, filters = {}) => {
         }
       }
     },
-    orderBy: {
-      submittedAt: 'desc'
-    }
+    // Sort by priority (URGENT first) then by submission date (newest first)
+    orderBy: [
+      {
+        priority: 'desc' // URGENT > STANDARD > ROUTINE (alphabetically reversed)
+      },
+      {
+        submittedAt: 'desc'
+      }
+    ]
   });
 
   // Format for response
@@ -161,6 +191,8 @@ const listClaims = async (userId, userRole, filters = {}) => {
     id: claim.id,
     claimNumber: claim.claimNumber,
     status: claim.status,
+    priority: claim.priority,
+    priorityConfidence: claim.priorityConfidence ? parseFloat(claim.priorityConfidence) : null,
     patientName: `${claim.patientFirstName} ${claim.patientLastName}`,
     serviceDate: claim.serviceDate,
     billedAmount: claim.billedAmount,
@@ -407,6 +439,9 @@ const getClaimById = async (claimId, userId, userRole) => {
     id: claim.id,
     claimNumber: claim.claimNumber,
     status: claim.status,
+    priority: claim.priority,
+    priorityConfidence: claim.priorityConfidence ? parseFloat(claim.priorityConfidence) : null,
+    priorityReasoning: claim.priorityReasoning,
     patient: {
       firstName: claim.patientFirstName,
       lastName: claim.patientLastName,
