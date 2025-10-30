@@ -6,6 +6,7 @@ import SubmitClaimPage from './pages/SubmitClaimPage';
 import ClaimDetailPage from './pages/ClaimDetailPage';
 import SetPasswordPage from './pages/SetPasswordPage';
 import AdminDashboard from './pages/AdminDashboard';
+import AnalyticsDashboard from './pages/AnalyticsDashboard';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -54,6 +55,32 @@ const AdminRoute = ({ children }) => {
   }
 
   if (user?.role !== 'admin') {
+    return <Navigate to="/dashboard" />;
+  }
+
+  return children;
+};
+
+// Analytics Route Component (requires admin or payer_processor role)
+const AnalyticsRoute = ({ children }) => {
+  const { isAuthenticated, loading, user } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+
+  if (user?.role !== 'admin' && user?.role !== 'payer_processor') {
     return <Navigate to="/dashboard" />;
   }
 
@@ -140,6 +167,14 @@ function App() {
               <ProtectedRoute>
                 <ClaimDetailPage />
               </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/analytics"
+            element={
+              <AnalyticsRoute>
+                <AnalyticsDashboard />
+              </AnalyticsRoute>
             }
           />
           <Route path="/" element={<Navigate to="/dashboard" />} />

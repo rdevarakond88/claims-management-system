@@ -10,6 +10,7 @@ const authRoutes = require('./routes/auth.routes');
 const claimsRoutes = require('./routes/claims.routes');
 const adminRoutes = require('./routes/admin.routes');
 const organizationRoutes = require('./routes/organization.routes');
+const analyticsRoutes = require('./routes/analytics.routes');
 const { checkFirstLogin } = require('./middleware/firstLoginCheck');
 const { logger } = require('./utils/logger');
 const { globalLimiter, speedLimiter } = require('./middleware/security');
@@ -97,6 +98,7 @@ app.use(checkFirstLogin);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/claims', claimsRoutes);
+app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1', organizationRoutes);
 
 // Health check endpoint

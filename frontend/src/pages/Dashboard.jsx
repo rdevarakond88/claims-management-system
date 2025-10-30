@@ -113,6 +113,14 @@ const Dashboard = () => {
                   {user?.role || 'Provider'}
                 </p>
               </div>
+              {(user?.role === 'admin' || user?.role === 'payer_processor') && (
+                <button
+                  onClick={() => navigate('/analytics')}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                >
+                  Analytics
+                </button>
+              )}
               {user?.role === 'admin' && (
                 <button
                   onClick={() => navigate('/admin')}

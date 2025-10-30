@@ -420,6 +420,248 @@ async function main() {
   });
   console.log('✅ Created ROUTINE claim (denied):', routineClaim4.claimNumber);
 
+  // Generate additional 30-day historical claims for analytics dashboard
+  console.log('\n📊 Generating 30-day historical claims for analytics dashboard...');
+
+  const today = new Date();
+  const claimsToCreate = [];
+  let claimCounter = 100; // Start from CLM-20251001-0100
+
+  // Helper function to generate random date within last 30 days
+  const getRandomDate = (daysAgo) => {
+    const date = new Date(today);
+    date.setDate(date.getDate() - daysAgo);
+    date.setHours(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60), 0, 0);
+    return date;
+  };
+
+  // Sample data for realistic claims
+  const urgentProcedures = [
+    { cpt: '99285', icd: 'I21.9', desc: 'Emergency dept - heart attack', amount: [7000, 12000], confidence: [0.90, 0.96] },
+    { cpt: '99284', icd: 'S06.0X1A', desc: 'Emergency dept - head trauma', amount: [5000, 9000], confidence: [0.88, 0.94] },
+    { cpt: '99291', icd: 'J96.01', desc: 'Critical care - respiratory failure', amount: [8000, 15000], confidence: [0.92, 0.97] },
+    { cpt: '43235', icd: 'K92.1', desc: 'Emergency endoscopy - GI bleeding', amount: [4000, 8000], confidence: [0.85, 0.92] },
+    { cpt: '27447', icd: 'S72.001A', desc: 'Emergency surgery - femur fracture', amount: [10000, 20000], confidence: [0.89, 0.95] },
+  ];
+
+  const standardProcedures = [
+    { cpt: '70553', icd: 'G44.1', desc: 'MRI brain with contrast', amount: [1500, 3000], confidence: [0.75, 0.88] },
+    { cpt: '29881', icd: 'M23.91', desc: 'Knee arthroscopy', amount: [3000, 6000], confidence: [0.78, 0.87] },
+    { cpt: '45378', icd: 'K63.5', desc: 'Diagnostic colonoscopy', amount: [1200, 2500], confidence: [0.80, 0.89] },
+    { cpt: '97110', icd: 'M79.3', desc: 'Physical therapy', amount: [150, 300], confidence: [0.72, 0.85] },
+    { cpt: '93306', icd: 'I50.9', desc: 'Echocardiogram', amount: [800, 1500], confidence: [0.76, 0.86] },
+  ];
+
+  const routineProcedures = [
+    { cpt: '99213', icd: 'Z00.00', desc: 'Office visit - wellness', amount: [100, 250], confidence: [0.85, 0.93] },
+    { cpt: '90658', icd: 'Z23', desc: 'Flu vaccination', amount: [25, 50], confidence: [0.88, 0.95] },
+    { cpt: '99395', icd: 'Z00.00', desc: 'Annual physical exam', amount: [150, 300], confidence: [0.87, 0.94] },
+    { cpt: '82947', icd: 'E11.9', desc: 'Glucose test - diabetes follow-up', amount: [30, 80], confidence: [0.82, 0.91] },
+    { cpt: '92015', icd: 'H52.4', desc: 'Routine eye examination', amount: [75, 150], confidence: [0.84, 0.92] },
+  ];
+
+  const providers = [provider1.id, provider2.id, provider3.id];
+  const providerUsers = [providerUser1.id, providerUser2.id, providerUser3.id];
+  const payerUsers = [payerUser1.id, payerUser2.id];
+
+  const firstNames = ['John', 'Mary', 'Robert', 'Patricia', 'Michael', 'Jennifer', 'William', 'Linda', 'David', 'Barbara', 'James', 'Elizabeth', 'Joseph', 'Susan', 'Charles', 'Jessica', 'Thomas', 'Sarah', 'Daniel', 'Karen'];
+  const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin'];
+
+  // Generate 23 URGENT claims (15% of total, targeting ~150 claims)
+  for (let i = 0; i < 23; i++) {
+    const daysAgo = Math.floor(Math.random() * 30);
+    const submittedAt = getRandomDate(daysAgo);
+    const proc = urgentProcedures[Math.floor(Math.random() * urgentProcedures.length)];
+    const billedAmount = proc.amount[0] + Math.random() * (proc.amount[1] - proc.amount[0]);
+    const confidence = proc.confidence[0] + Math.random() * (proc.confidence[1] - proc.confidence[0]);
+
+    // Urgent claims are mostly adjudicated quickly (80% adjudicated)
+    const isAdjudicated = Math.random() < 0.80;
+    const status = isAdjudicated ? (Math.random() < 0.90 ? 'approved' : 'denied') : 'submitted';
+
+    let adjudicatedAt = null;
+    let approvedAmount = null;
+    let adjudicatedByUserId = null;
+    let denialReasonCode = null;
+    let denialExplanation = null;
+
+    if (isAdjudicated) {
+      // Urgent claims are adjudicated in 12-36 hours
+      const hoursToAdjudicate = 12 + Math.random() * 24;
+      adjudicatedAt = new Date(submittedAt.getTime() + hoursToAdjudicate * 60 * 60 * 1000);
+      adjudicatedByUserId = payerUsers[Math.floor(Math.random() * payerUsers.length)];
+
+      if (status === 'approved') {
+        // Approved amount is 85-100% of billed amount
+        approvedAmount = billedAmount * (0.85 + Math.random() * 0.15);
+      } else {
+        denialReasonCode = 'MISSING_DOC';
+        denialExplanation = 'Missing required pre-authorization for emergency procedure';
+      }
+    }
+
+    claimsToCreate.push({
+      claimNumber: `CLM-${submittedAt.toISOString().slice(0, 10).replace(/-/g, '')}-${String(claimCounter++).padStart(4, '0')}`,
+      providerId: providers[Math.floor(Math.random() * providers.length)],
+      submittedByUserId: providerUsers[Math.floor(Math.random() * providerUsers.length)],
+      status,
+      priority: 'URGENT',
+      priorityConfidence: parseFloat(confidence.toFixed(2)),
+      priorityReasoning: proc.desc + ' - high severity and immediate attention required',
+      patientFirstName: firstNames[Math.floor(Math.random() * firstNames.length)],
+      patientLastName: lastNames[Math.floor(Math.random() * lastNames.length)],
+      patientDob: new Date(1940 + Math.floor(Math.random() * 60), Math.floor(Math.random() * 12), 1 + Math.floor(Math.random() * 28)),
+      patientMemberId: `MEM${Math.floor(Math.random() * 1000000000)}`,
+      cptCode: proc.cpt,
+      icd10Code: proc.icd,
+      serviceDate: new Date(submittedAt.getTime() - 24 * 60 * 60 * 1000), // Day before submission
+      billedAmount: parseFloat(billedAmount.toFixed(2)),
+      approvedAmount: approvedAmount ? parseFloat(approvedAmount.toFixed(2)) : null,
+      submittedAt,
+      adjudicatedAt,
+      adjudicatedByUserId,
+      denialReasonCode,
+      denialExplanation,
+    });
+  }
+
+  // Generate 85 STANDARD claims (57% of total)
+  for (let i = 0; i < 85; i++) {
+    const daysAgo = Math.floor(Math.random() * 30);
+    const submittedAt = getRandomDate(daysAgo);
+    const proc = standardProcedures[Math.floor(Math.random() * standardProcedures.length)];
+    const billedAmount = proc.amount[0] + Math.random() * (proc.amount[1] - proc.amount[0]);
+    const confidence = proc.confidence[0] + Math.random() * (proc.confidence[1] - proc.confidence[0]);
+
+    // Standard claims adjudicated 65% of the time
+    const isAdjudicated = daysAgo > 5 ? Math.random() < 0.70 : Math.random() < 0.40;
+    const status = isAdjudicated ? (Math.random() < 0.88 ? 'approved' : 'denied') : 'submitted';
+
+    let adjudicatedAt = null;
+    let approvedAmount = null;
+    let adjudicatedByUserId = null;
+    let denialReasonCode = null;
+    let denialExplanation = null;
+
+    if (isAdjudicated) {
+      // Standard claims adjudicated in 24-96 hours
+      const hoursToAdjudicate = 24 + Math.random() * 72;
+      adjudicatedAt = new Date(submittedAt.getTime() + hoursToAdjudicate * 60 * 60 * 1000);
+      adjudicatedByUserId = payerUsers[Math.floor(Math.random() * payerUsers.length)];
+
+      if (status === 'approved') {
+        approvedAmount = billedAmount * (0.80 + Math.random() * 0.15);
+      } else {
+        const denialReasons = [
+          { code: 'NOT_COVERED', text: 'Service not covered under current plan' },
+          { code: 'MISSING_DOC', text: 'Missing required documentation' },
+          { code: 'DUPLICATE', text: 'Duplicate claim submission' },
+        ];
+        const denial = denialReasons[Math.floor(Math.random() * denialReasons.length)];
+        denialReasonCode = denial.code;
+        denialExplanation = denial.text;
+      }
+    }
+
+    claimsToCreate.push({
+      claimNumber: `CLM-${submittedAt.toISOString().slice(0, 10).replace(/-/g, '')}-${String(claimCounter++).padStart(4, '0')}`,
+      providerId: providers[Math.floor(Math.random() * providers.length)],
+      submittedByUserId: providerUsers[Math.floor(Math.random() * providerUsers.length)],
+      status,
+      priority: 'STANDARD',
+      priorityConfidence: parseFloat(confidence.toFixed(2)),
+      priorityReasoning: proc.desc + ' - moderate complexity, standard processing timeline',
+      patientFirstName: firstNames[Math.floor(Math.random() * firstNames.length)],
+      patientLastName: lastNames[Math.floor(Math.random() * lastNames.length)],
+      patientDob: new Date(1940 + Math.floor(Math.random() * 60), Math.floor(Math.random() * 12), 1 + Math.floor(Math.random() * 28)),
+      patientMemberId: `MEM${Math.floor(Math.random() * 1000000000)}`,
+      cptCode: proc.cpt,
+      icd10Code: proc.icd,
+      serviceDate: new Date(submittedAt.getTime() - 24 * 60 * 60 * 1000),
+      billedAmount: parseFloat(billedAmount.toFixed(2)),
+      approvedAmount: approvedAmount ? parseFloat(approvedAmount.toFixed(2)) : null,
+      submittedAt,
+      adjudicatedAt,
+      adjudicatedByUserId,
+      denialReasonCode,
+      denialExplanation,
+    });
+  }
+
+  // Generate 42 ROUTINE claims (28% of total)
+  for (let i = 0; i < 42; i++) {
+    const daysAgo = Math.floor(Math.random() * 30);
+    const submittedAt = getRandomDate(daysAgo);
+    const proc = routineProcedures[Math.floor(Math.random() * routineProcedures.length)];
+    const billedAmount = proc.amount[0] + Math.random() * (proc.amount[1] - proc.amount[0]);
+    const confidence = proc.confidence[0] + Math.random() * (proc.confidence[1] - proc.confidence[0]);
+
+    // Routine claims adjudicated 70% of the time (faster for preventive)
+    const isAdjudicated = daysAgo > 7 ? Math.random() < 0.75 : Math.random() < 0.50;
+    const status = isAdjudicated ? (Math.random() < 0.92 ? 'approved' : 'denied') : 'submitted';
+
+    let adjudicatedAt = null;
+    let approvedAmount = null;
+    let adjudicatedByUserId = null;
+    let denialReasonCode = null;
+    let denialExplanation = null;
+
+    if (isAdjudicated) {
+      // Routine claims adjudicated in 48-168 hours (2-7 days)
+      const hoursToAdjudicate = 48 + Math.random() * 120;
+      adjudicatedAt = new Date(submittedAt.getTime() + hoursToAdjudicate * 60 * 60 * 1000);
+      adjudicatedByUserId = payerUsers[Math.floor(Math.random() * payerUsers.length)];
+
+      if (status === 'approved') {
+        // Preventive care often covered 100%
+        approvedAmount = billedAmount * (0.95 + Math.random() * 0.05);
+      } else {
+        denialReasonCode = 'ANNUAL_LIMIT';
+        denialExplanation = 'Annual preventive care limit exceeded';
+      }
+    }
+
+    claimsToCreate.push({
+      claimNumber: `CLM-${submittedAt.toISOString().slice(0, 10).replace(/-/g, '')}-${String(claimCounter++).padStart(4, '0')}`,
+      providerId: providers[Math.floor(Math.random() * providers.length)],
+      submittedByUserId: providerUsers[Math.floor(Math.random() * providerUsers.length)],
+      status,
+      priority: 'ROUTINE',
+      priorityConfidence: parseFloat(confidence.toFixed(2)),
+      priorityReasoning: proc.desc + ' - preventive/routine care, standard processing acceptable',
+      patientFirstName: firstNames[Math.floor(Math.random() * firstNames.length)],
+      patientLastName: lastNames[Math.floor(Math.random() * lastNames.length)],
+      patientDob: new Date(1940 + Math.floor(Math.random() * 60), Math.floor(Math.random() * 12), 1 + Math.floor(Math.random() * 28)),
+      patientMemberId: `MEM${Math.floor(Math.random() * 1000000000)}`,
+      cptCode: proc.cpt,
+      icd10Code: proc.icd,
+      serviceDate: new Date(submittedAt.getTime() - 24 * 60 * 60 * 1000),
+      billedAmount: parseFloat(billedAmount.toFixed(2)),
+      approvedAmount: approvedAmount ? parseFloat(approvedAmount.toFixed(2)) : null,
+      submittedAt,
+      adjudicatedAt,
+      adjudicatedByUserId,
+      denialReasonCode,
+      denialExplanation,
+    });
+  }
+
+  // Sort claims by submitted date
+  claimsToCreate.sort((a, b) => a.submittedAt - b.submittedAt);
+
+  // Create all claims
+  for (const claimData of claimsToCreate) {
+    await prisma.claim.create({ data: claimData });
+  }
+
+  console.log(`✅ Created ${claimsToCreate.length} additional claims for analytics dashboard`);
+  console.log(`   - ${claimsToCreate.filter(c => c.priority === 'URGENT').length} URGENT claims`);
+  console.log(`   - ${claimsToCreate.filter(c => c.priority === 'STANDARD').length} STANDARD claims`);
+  console.log(`   - ${claimsToCreate.filter(c => c.priority === 'ROUTINE').length} ROUTINE claims`);
+  console.log(`   - ${claimsToCreate.filter(c => c.status === 'approved').length} approved`);
+  console.log(`   - ${claimsToCreate.filter(c => c.status === 'denied').length} denied`);
+  console.log(`   - ${claimsToCreate.filter(c => c.status === 'submitted').length} pending`);
+
   // Create audit logs for adjudicated claims
   await prisma.auditLog.createMany({
     data: [
