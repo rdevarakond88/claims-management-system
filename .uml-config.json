@@ -1,0 +1,241 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "UML Diagram Maintenance Configuration",
+  "description": "Defines which code changes trigger which diagram updates",
+  "version": "1.0.0",
+  "diagramFile": "docs/SYSTEM_UML_DIAGRAMS.md",
+  "updateTriggers": {
+    "database": {
+      "description": "Database schema and model changes",
+      "watchFiles": [
+        "backend/prisma/schema.prisma",
+        "backend/prisma/migrations/**/*.sql"
+      ],
+      "affectedDiagrams": [
+        {
+          "name": "Database Schema (ERD)",
+          "section": "For Developers",
+          "priority": "critical",
+          "reason": "Schema changes must be reflected in ERD"
+        },
+        {
+          "name": "Class Diagram - Core Domain Models",
+          "section": "For Developers",
+          "priority": "high",
+          "reason": "Model structure and relationships may have changed"
+        },
+        {
+          "name": "State Machine - Claim Status Transitions",
+          "section": "For Developers",
+          "priority": "medium",
+          "reason": "Status enums may have been modified"
+        }
+      ]
+    },
+    "apiRoutes": {
+      "description": "API endpoint changes",
+      "watchFiles": [
+        "backend/src/routes/**/*.ts",
+        "backend/src/routes/**/*.js"
+      ],
+      "affectedDiagrams": [
+        {
+          "name": "API Endpoint Map",
+          "section": "For Developers",
+          "priority": "high",
+          "reason": "New or modified endpoints must be documented"
+        },
+        {
+          "name": "Sequence Diagram - Claims Submission Flow",
+          "section": "For Developers",
+          "priority": "medium",
+          "reason": "Endpoint logic may have changed"
+        },
+        {
+          "name": "Sequence Diagram - Claims Adjudication Flow",
+          "section": "For Developers",
+          "priority": "medium",
+          "reason": "Endpoint logic may have changed"
+        }
+      ]
+    },
+    "controllers": {
+      "description": "Controller and business logic changes",
+      "watchFiles": [
+        "backend/src/controllers/**/*.ts",
+        "backend/src/controllers/**/*.js",
+        "backend/src/services/**/*.ts",
+        "backend/src/services/**/*.js"
+      ],
+      "affectedDiagrams": [
+        {
+          "name": "Sequence Diagram - Claims Submission Flow",
+          "section": "For Developers",
+          "priority": "high",
+          "reason": "Request handling logic changed"
+        },
+        {
+          "name": "Sequence Diagram - Claims Adjudication Flow",
+          "section": "For Developers",
+          "priority": "high",
+          "reason": "Request handling logic changed"
+        },
+        {
+          "name": "Component Architecture",
+          "section": "For System Architects",
+          "priority": "medium",
+          "reason": "New services or controllers added"
+        }
+      ]
+    },
+    "frontendPages": {
+      "description": "Frontend page and workflow changes",
+      "watchFiles": [
+        "frontend/src/pages/**/*.tsx",
+        "frontend/src/pages/**/*.jsx"
+      ],
+      "affectedDiagrams": [
+        {
+          "name": "User Journey - Claims Submission",
+          "section": "For Business Stakeholders",
+          "priority": "medium",
+          "reason": "User workflow may have changed"
+        },
+        {
+          "name": "High-Level Workflow",
+          "section": "For Business Stakeholders",
+          "priority": "medium",
+          "reason": "Business process may have changed"
+        },
+        {
+          "name": "Component Dependency Graph",
+          "section": "For Developers",
+          "priority": "low",
+          "reason": "Frontend component structure may have changed"
+        }
+      ]
+    },
+    "authentication": {
+      "description": "Authentication and authorization changes",
+      "watchFiles": [
+        "backend/src/middleware/auth*.ts",
+        "backend/src/middleware/auth*.js",
+        "backend/src/services/auth*.ts",
+        "backend/src/services/auth*.js"
+      ],
+      "affectedDiagrams": [
+        {
+          "name": "Security Architecture",
+          "section": "For System Architects",
+          "priority": "high",
+          "reason": "Auth flow or security model changed"
+        },
+        {
+          "name": "User Roles & Permissions",
+          "section": "For Business Stakeholders",
+          "priority": "medium",
+          "reason": "Role definitions may have changed"
+        }
+      ]
+    },
+    "infrastructure": {
+      "description": "Deployment and infrastructure changes",
+      "watchFiles": [
+        "deployment/**/*",
+        "docker-compose.yml",
+        "Dockerfile",
+        ".github/workflows/**/*.yml"
+      ],
+      "affectedDiagrams": [
+        {
+          "name": "Deployment Architecture",
+          "section": "For System Architects",
+          "priority": "high",
+          "reason": "Infrastructure setup changed"
+        },
+        {
+          "name": "System Architecture (C4 Model - Level 1)",
+          "section": "For System Architects",
+          "priority": "medium",
+          "reason": "External dependencies may have changed"
+        }
+      ]
+    }
+  },
+  "audiences": {
+    "business": {
+      "label": "Business Stakeholders",
+      "focus": "User workflows, business processes, high-level interactions",
+      "diagramTypes": ["Context Diagram", "User Journey", "Workflow", "Roles & Permissions"],
+      "technicalLevel": "low"
+    },
+    "architects": {
+      "label": "System Architects",
+      "focus": "System design, data flow, infrastructure, integration patterns",
+      "diagramTypes": [
+        "System Architecture",
+        "Component Architecture",
+        "Data Flow",
+        "Deployment Architecture",
+        "Security Architecture"
+      ],
+      "technicalLevel": "high"
+    },
+    "developers": {
+      "label": "Developers",
+      "focus": "Code structure, API flows, database schema, implementation details",
+      "diagramTypes": [
+        "Class Diagram",
+        "Sequence Diagram",
+        "API Endpoint Map",
+        "Database Schema (ERD)",
+        "State Machine",
+        "Component Dependency Graph"
+      ],
+      "technicalLevel": "high"
+    }
+  },
+  "maintenanceRules": {
+    "autoUpdateLastModified": true,
+    "requireDiagramUpdateOnCommit": true,
+    "criticalPriorityBlocks": false,
+    "reviewFrequency": "every major release",
+    "minimumDiagramsPerAudience": 3
+  },
+  "styleGuide": {
+    "mermaidTheme": "default",
+    "colorScheme": {
+      "business": {
+        "provider": "#c8e6c9",
+        "payer": "#fff9c4",
+        "admin": "#d1c4e9",
+        "patient": "#e1f5ff",
+        "cms": "#f8bbd0"
+      },
+      "technical": {
+        "frontend": "#61dafb",
+        "backend": "#68a063",
+        "database": "#336791",
+        "cache": "#dc382d",
+        "security": "#f44336"
+      }
+    },
+    "labelingConventions": {
+      "useEmojis": "business stakeholder diagrams only",
+      "includeLineNumbers": false,
+      "showTimestamps": true,
+      "technicalTerms": "explain in notes for business diagrams"
+    }
+  },
+  "tools": {
+    "diagramEditor": "https://mermaid.live/",
+    "autoGenerationScript": "scripts/update-uml-diagrams.js",
+    "preCommitHook": ".githooks/pre-commit",
+    "setupScript": "scripts/setup-git-hooks.sh"
+  },
+  "documentation": {
+    "mainFile": "docs/SYSTEM_UML_DIAGRAMS.md",
+    "guidelines": "See 'Diagram Maintenance Guide' section in main file",
+    "supportedPlatforms": ["GitHub", "GitLab", "VS Code", "Confluence", "Notion"]
+  }
+}

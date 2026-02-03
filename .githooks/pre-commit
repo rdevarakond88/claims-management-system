@@ -1,0 +1,151 @@
+#!/bin/bash
+#
+# Git Pre-Commit Hook for UML Diagram Updates
+#
+# This hook checks if files that affect UML diagrams have been modified.
+# If they have, it reminds you to update the diagrams.
+#
+# To install this hook:
+#   git config core.hooksPath .githooks
+#   chmod +x .githooks/pre-commit
+#
+
+set -e
+
+# Colors for terminal output
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m' # No Color
+
+# Files that should trigger diagram update reminders
+CRITICAL_FILES=(
+  "backend/prisma/schema.prisma"
+  "backend/src/routes/"
+  "backend/src/controllers/"
+  "backend/src/models/"
+)
+
+DIAGRAM_FILE="docs/SYSTEM_UML_DIAGRAMS.md"
+
+# Check if any critical files are in the commit
+echo -e "${CYAN}🔍 Checking for files that affect UML diagrams...${NC}"
+
+files_changed=false
+changed_critical_files=()
+
+for file_pattern in "${CRITICAL_FILES[@]}"; do
+  # Check staged files
+  if git diff --cached --name-only | grep -q "^${file_pattern}"; then
+    files_changed=true
+    changed_critical_files+=("$file_pattern")
+  fi
+done
+
+# If no critical files changed, allow commit
+if [ "$files_changed" = false ]; then
+  echo -e "${GREEN}✓ No critical files changed. Proceeding with commit.${NC}"
+  exit 0
+fi
+
+# Critical files changed - check if diagrams were also updated
+echo -e "${YELLOW}⚠️  Critical files detected in commit:${NC}"
+for file in "${changed_critical_files[@]}"; do
+  echo -e "   • ${file}"
+done
+echo ""
+
+diagram_updated=false
+if git diff --cached --name-only | grep -q "^${DIAGRAM_FILE}"; then
+  diagram_updated=true
+fi
+
+if [ "$diagram_updated" = true ]; then
+  echo -e "${GREEN}✓ UML diagrams were updated in this commit. Great!${NC}"
+  exit 0
+fi
+
+# Diagrams not updated - show warning and options
+echo ""
+echo -e "${BOLD}${YELLOW}╔════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${BOLD}${YELLOW}║                                                            ║${NC}"
+echo -e "${BOLD}${YELLOW}║  ⚠️  UML DIAGRAM UPDATE REMINDER                           ║${NC}"
+echo -e "${BOLD}${YELLOW}║                                                            ║${NC}"
+echo -e "${BOLD}${YELLOW}╚════════════════════════════════════════════════════════════╝${NC}"
+echo ""
+echo -e "${CYAN}You modified files that may affect UML diagrams:${NC}"
+echo ""
+echo -e "  📊 ${DIAGRAM_FILE}"
+echo ""
+echo -e "${CYAN}These diagrams may need updating:${NC}"
+
+# Specific suggestions based on what changed
+if git diff --cached --name-only | grep -q "prisma/schema.prisma"; then
+  echo -e "  • ${BOLD}ERD (Database Schema)${NC} - if you changed models/fields"
+  echo -e "  • ${BOLD}Class Diagram${NC} - if you changed entity structure"
+  echo -e "  • ${BOLD}State Machine${NC} - if you changed status enums"
+fi
+
+if git diff --cached --name-only | grep -q "src/routes/"; then
+  echo -e "  • ${BOLD}API Endpoint Map${NC} - if you added/removed endpoints"
+  echo -e "  • ${BOLD}Sequence Diagrams${NC} - if you changed API flows"
+fi
+
+if git diff --cached --name-only | grep -q "src/controllers/"; then
+  echo -e "  • ${BOLD}Sequence Diagrams${NC} - if you changed business logic"
+  echo -e "  • ${BOLD}Component Diagram${NC} - if you added new controllers"
+fi
+
+echo ""
+echo -e "${CYAN}Options:${NC}"
+echo -e "  1. Run: ${BOLD}node scripts/update-uml-diagrams.js${NC} to check what needs updating"
+echo -e "  2. Update diagrams manually and add to this commit: ${BOLD}git add $DIAGRAM_FILE${NC}"
+echo -e "  3. Skip for now (commit with: ${BOLD}git commit --no-verify${NC})"
+echo ""
+
+# Ask user what to do
+echo -e "${YELLOW}What would you like to do?${NC}"
+echo "  [c] Check what needs updating (run analysis script)"
+echo "  [u] Update diagrams now (opens file in editor)"
+echo "  [s] Skip and commit anyway (--no-verify)"
+echo "  [a] Abort commit"
+echo ""
+
+read -p "Choose an option [c/u/s/a]: " choice
+
+case "$choice" in
+  c|C)
+    echo ""
+    echo -e "${CYAN}Running diagram analysis...${NC}"
+    node scripts/update-uml-diagrams.js --interactive
+    echo ""
+    echo -e "${YELLOW}After reviewing the checklist, update the diagrams and add them to your commit.${NC}"
+    echo -e "Then run: ${BOLD}git commit${NC} again"
+    exit 1
+    ;;
+  u|U)
+    echo ""
+    echo -e "${CYAN}Opening diagram file in editor...${NC}"
+    ${EDITOR:-vi} "$DIAGRAM_FILE"
+    echo ""
+    echo -e "${YELLOW}After updating, add the file to your commit:${NC}"
+    echo -e "  ${BOLD}git add $DIAGRAM_FILE${NC}"
+    echo -e "  ${BOLD}git commit${NC}"
+    exit 1
+    ;;
+  s|S)
+    echo ""
+    echo -e "${YELLOW}⚠️  Skipping diagram update check.${NC}"
+    echo -e "${YELLOW}Remember to update diagrams later!${NC}"
+    echo ""
+    exit 0
+    ;;
+  a|A|*)
+    echo ""
+    echo -e "${RED}Commit aborted.${NC}"
+    echo ""
+    exit 1
+    ;;
+esac
