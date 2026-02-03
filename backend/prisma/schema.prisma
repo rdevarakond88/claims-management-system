@@ -47,6 +47,7 @@ model User {
   payerId           String?    @map("payer_id")
   firstName         String?    @map("first_name")
   lastName          String?    @map("last_name")
+  phoneNumber       String?    @map("phone_number")
   isActive          Boolean    @default(true) @map("is_active")
   isFirstLogin      Boolean    @default(true) @map("is_first_login")
   lastLogin         DateTime?  @map("last_login")

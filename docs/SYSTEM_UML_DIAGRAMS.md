@@ -1,6 +1,6 @@
 # System UML Diagrams
 > **Multi-Audience Technical Documentation**
-> Last Updated: 2026-02-03
+> Last Updated: 2026-02-03 (Updated: Added phoneNumber field to User model)
 > Auto-Update Status: ✅ Enabled
 
 ---
@@ -307,6 +307,7 @@ classDiagram
         +Role role
         +String providerId?
         +String payerId?
+        +String phoneNumber?
         +DateTime createdAt
         +login()
         +logout()
@@ -549,6 +550,7 @@ erDiagram
         enum role
         uuid provider_id FK
         uuid payer_id FK
+        string phone_number "Nullable"
         boolean must_change_password
         timestamp created_at
         timestamp updated_at
