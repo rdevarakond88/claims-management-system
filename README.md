@@ -11,9 +11,40 @@ This project is a **Product Management learning initiative** designed to:
 - Simulate enterprise-grade healthcare claims processing
 - Showcase AI-assisted product development workflows
 
-**Built by:** [rdevarakond88](https://github.com/rdevarakond88)  
-**Domain:** Healthcare IT (Payer/Provider Claims Management)  
-**Tech Stack:** (To be determined in architecture phase)
+**Built by:** [rdevarakond88](https://github.com/rdevarakond88)
+**Domain:** Healthcare IT (Payer/Provider Claims Management)
+**Tech Stack:** Node.js, React, PostgreSQL, Redis
+
+---
+
+## 🤖 Smart Automation Features
+
+### 📧 Intelligent Release Notifications
+This repository features an **automated email notification system** that sends tailored updates to different stakeholders:
+
+- **🎯 Business Stakeholders** — High-level summaries, business impact, user experience changes
+- **🏗️ System Architects** — Architecture changes, infrastructure updates, security & performance
+- **👨‍💻 Developers** — Technical details, API changes, database schema, migration guides
+
+**How it works:**
+- Update `CHANGELOG.md` with version-specific changes
+- Commit your changes
+- System automatically detects and prompts to send audience-specific emails
+- Each persona receives customized, beautifully formatted HTML emails
+
+➡️ **[Email Notifications Guide](./docs/EMAIL_NOTIFICATIONS_GUIDE.md)**
+
+### 📊 Auto-Maintained UML Diagrams
+Comprehensive **18+ UML diagrams** that stay in sync with your codebase:
+
+- **Multi-audience design** — Separate views for business, architects, and developers
+- **Automatic staleness detection** — Git hooks remind you when diagrams need updating
+- **Smart change tracking** — Monitors Prisma schema, API routes, and critical files
+- **GitHub-friendly** — Renders beautifully with Mermaid syntax
+
+➡️ **[View System Diagrams](./docs/SYSTEM_UML_DIAGRAMS.md)** | **[UML Maintenance Guide](./docs/UML_MAINTENANCE_GUIDE.md)**
+
+**These automation features ensure your documentation stays current and stakeholders stay informed — automatically.**
 
 ---
 
@@ -43,10 +74,20 @@ See [Production Readiness Roadmap](./docs/PRODUCTION_READINESS.md) for detailed 
 /claims-management-system
 │
 ├── /docs                    # Product requirements and documentation
+│   ├── SYSTEM_UML_DIAGRAMS.md            # ⭐ 18+ auto-maintained UML diagrams
+│   ├── EMAIL_NOTIFICATIONS_GUIDE.md       # ⭐ Automated email system docs
+│   └── ... (other docs)
 ├── /architecture            # System design, data models, API specs
 ├── /context-for-ai          # Context files for AI-assisted development
 ├── /deployment              # Docker, CI/CD, DevOps configurations
-├── /src                     # Source code (to be added)
+├── /email-templates         # ⭐ HTML email templates (Business, Dev, Architect)
+├── /scripts                 # ⭐ Automation scripts
+│   ├── send-release-notifications.js     # Email notification system
+│   └── update-uml-diagrams.js            # Diagram maintenance tool
+├── /.githooks               # ⭐ Smart git hooks for automation
+├── /frontend                # React frontend application
+├── /backend                 # Express.js API backend
+├── CHANGELOG.md             # ⭐ Multi-audience release notes
 └── README.md                # This file
 ```
 
@@ -74,14 +115,23 @@ cd claims-management-system
 
 All product and technical documentation lives in the `/docs` and `/architecture` folders:
 
+### Smart Documentation & Automation
+- **[System UML Diagrams](./docs/SYSTEM_UML_DIAGRAMS.md)** ⭐ — 18+ multi-audience diagrams with auto-update system
+- **[UML Maintenance Guide](./docs/UML_MAINTENANCE_GUIDE.md)** — Complete guide to diagram automation
+- **[Email Notifications Guide](./docs/EMAIL_NOTIFICATIONS_GUIDE.md)** ⭐ — Automated release notifications setup
+- **[CHANGELOG](./CHANGELOG.md)** — Multi-audience release notes
+
+### Product Documentation
 - **[PRD (Product Requirements Document)](./docs/PRD.md)** — Full product specification
 - **[Production Readiness Roadmap](./docs/PRODUCTION_READINESS.md)** — Implementation gaps and priority roadmap
 - **[Troubleshooting Log](./docs/TROUBLESHOOTING_LOG.md)** — Real issues found and resolved during development
 - **[User Stories](./docs/USER_STORIES.md)** — User scenarios and acceptance criteria
-- **[Admin User Provisioning Guide](./docs/ADMIN_USER_PROVISIONING.md)** — Implementation guide for user management
+
+### Technical Documentation
 - **[System Design](./architecture/SYSTEM_DESIGN.md)** — Architecture overview
 - **[Data Model](./architecture/DATA_MODEL.md)** — Database schema
 - **[API Contracts](./architecture/API_CONTRACTS.md)** — Endpoint specifications
+- **[Admin User Provisioning Guide](./docs/ADMIN_USER_PROVISIONING.md)** — Implementation guide for user management
 
 ---
 
@@ -91,6 +141,13 @@ This project uses **Claude Code** and **GitHub MCP integration** for:
 - Context-aware code generation
 - Consistent implementation of requirements
 - Automated documentation updates
+- **Smart automation systems** (UML diagrams, email notifications)
+
+**Intelligent Features Built with AI:**
+- 📧 Multi-audience email notification system with persona-specific content
+- 📊 Auto-maintained UML diagrams with staleness detection
+- 🔔 Git hooks for automatic documentation reminders
+- 📝 CHANGELOG-driven release management
 
 Context files for AI assistants are stored in `/context-for-ai/`.
 
