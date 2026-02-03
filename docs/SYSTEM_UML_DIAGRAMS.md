@@ -1,6 +1,6 @@
 # System UML Diagrams
 > **Multi-Audience Technical Documentation**
-> Last Updated: 2026-02-03 (Updated: Added phoneNumber field to User model)
+> Last Updated: 2026-02-03 (Fixed: Class Diagram enum rendering, User Roles diagram readability)
 > Auto-Update Status: ✅ Enabled
 
 ---
@@ -97,27 +97,55 @@ stateDiagram-v2
 **Purpose:** Who can do what in the system
 
 ```mermaid
-mindmap
-  root((Claims Management System))
-    Provider Staff
-      Submit claims
-      View own claims
-      Track status
-      Download reports
-    Payer Claims Processor
-      View all claims
-      Approve/Deny claims
-      Set reimbursement
-      Add adjudication notes
-    System Admin
-      Provision users
-      Assign roles
-      View audit logs
-      Manage system config
-    CMS Proxy User
-      View forwarded claims
-      Generate reports
-      [Future feature]
+graph TB
+    CMS[Claims Management System]
+
+    subgraph "Provider Staff"
+        PS1[Submit claims]
+        PS2[View own claims]
+        PS3[Track status]
+        PS4[Download reports]
+    end
+
+    subgraph "Payer Claims Processor"
+        PP1[View all claims]
+        PP2[Approve/Deny claims]
+        PP3[Set reimbursement]
+        PP4[Add adjudication notes]
+    end
+
+    subgraph "System Admin"
+        SA1[Provision users]
+        SA2[Assign roles]
+        SA3[View audit logs]
+        SA4[Manage system config]
+    end
+
+    subgraph "CMS Proxy User - Future"
+        CP1[View forwarded claims]
+        CP2[Generate reports]
+    end
+
+    CMS --> PS1
+    CMS --> PP1
+    CMS --> SA1
+    CMS -.-> CP1
+
+    style CMS fill:#4CAF50,color:#fff
+    style PS1 fill:#c8e6c9
+    style PS2 fill:#c8e6c9
+    style PS3 fill:#c8e6c9
+    style PS4 fill:#c8e6c9
+    style PP1 fill:#fff9c4
+    style PP2 fill:#fff9c4
+    style PP3 fill:#fff9c4
+    style PP4 fill:#fff9c4
+    style SA1 fill:#d1c4e9
+    style SA2 fill:#d1c4e9
+    style SA3 fill:#d1c4e9
+    style SA4 fill:#d1c4e9
+    style CP1 fill:#f8bbd0
+    style CP2 fill:#f8bbd0
 ```
 
 ---
@@ -367,24 +395,30 @@ classDiagram
         +log()
     }
 
+    class Role {
+        <<enumeration>>
+        PROVIDER_STAFF
+        PAYER_PROCESSOR
+        ADMIN
+    }
+
+    class Status {
+        <<enumeration>>
+        SUBMITTED
+        UNDER_REVIEW
+        APPROVED
+        DENIED
+        PAID
+    }
+
     User "1" --> "0..1" Provider : works_for
     User "1" --> "0..1" Payer : works_for
     Provider "1" --> "*" Claim : submits
     Payer "1" --> "*" Claim : adjudicates
     Claim "1" --> "*" AuditLog : tracks_changes
     User "1" --> "*" AuditLog : performs_action
-
-    <<enumeration>> Role
-    Role : PROVIDER_STAFF
-    Role : PAYER_PROCESSOR
-    Role : ADMIN
-
-    <<enumeration>> Status
-    Status : SUBMITTED
-    Status : UNDER_REVIEW
-    Status : APPROVED
-    Status : DENIED
-    Status : PAID
+    User --> Role : has
+    Claim --> Status : has
 ```
 
 ### 2. Sequence Diagram - Claims Submission Flow
