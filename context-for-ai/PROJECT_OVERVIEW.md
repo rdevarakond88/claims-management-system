@@ -114,6 +114,7 @@ Payer sends remittance advice to Provider (payment details)
 ### User
 - **ID:** Unique identifier
 - **Email:** Login credential
+- **Phone Number:** Contact phone (optional)
 - **Role:** Provider Staff | Payer Claims Processor | Admin
 - **Associated Entity:** Provider ID or Payer ID
 
@@ -132,6 +133,73 @@ Payer sends remittance advice to Provider (payment details)
 - **Role-based access:** Providers see only their claims, Payers see all claims for their org
 - **Audit trail:** Track who changed claim status and when
 - **API-first:** Frontend consumes backend API (allows future mobile app)
+
+---
+
+## 🤖 Smart Automation Features
+
+### Automated UML Diagram Maintenance
+This repository includes an intelligent documentation system with **18+ UML diagrams** that stay synchronized with the codebase:
+
+**Key Features:**
+- **Multi-audience design:** Separate diagram views for business stakeholders, architects, and developers
+- **Git hook automation:** Pre-commit hooks detect code changes and remind which diagrams need updating
+- **Validation system:** Commit blocked if diagrams aren't updated alongside code changes
+- **Smart detection:** Monitors Prisma schema, routes, controllers for relevant changes
+
+**Location:** `docs/SYSTEM_UML_DIAGRAMS.md`
+
+**Usage:**
+```bash
+# Check diagram status
+node scripts/update-uml-diagrams.js --check
+
+# Git hook automatically reminds during commit
+git commit -m "Change schema"
+# → ⚠️ Schema changed! Update Class Diagram + ERD
+```
+
+### Automated Multi-Audience Email Notifications
+Release notifications are automatically generated and sent to stakeholders:
+
+**Key Features:**
+- **Three tailored email templates:** Business stakeholders, System architects, Developers
+- **CHANGELOG-driven:** Content extracted from multi-audience CHANGELOG.md
+- **Gmail SMTP integration:** Automatically sends emails via configured Gmail account
+- **Post-commit automation:** Prompts to send notifications when CHANGELOG.md updates
+
+**Recipients (configured):**
+- Business: High-level summaries, user impact
+- Architects: Architecture changes, infrastructure updates
+- Developers: API changes, migration guides, code references
+
+**Location:** `scripts/send-release-notifications.js`, `email-templates/`
+
+**Usage:**
+```bash
+# Update CHANGELOG and commit
+git commit -m "Release v1.2.0"
+# → Post-commit hook prompts: "Send notifications? [y/d/l/n]"
+
+# Manual send
+node scripts/send-release-notifications.js --version=1.2.0
+```
+
+### What's Automated vs Manual
+
+**Automated:**
+- ✅ UML diagram staleness detection and reminders
+- ✅ UML diagram update validation (blocks commit if not updated)
+- ✅ Email notification generation from CHANGELOG
+- ✅ SMTP email sending to configured recipients
+
+**Manual (intentionally):**
+- ❌ PRD.md updates (requires business context)
+- ❌ API_CONTRACTS.md updates (requires design decisions)
+- ❌ CHANGELOG.md content (requires human-written release notes)
+- ❌ Diagram content edits (requires architectural judgment)
+
+**See:** `AUTOMATION_STATUS.md` for complete details on automation scope
 
 ---
 
@@ -168,11 +236,18 @@ When generating code for this project:
 - **Check the data model** (`/architecture/DATA_MODEL.md`) for entity structure
 - **Follow API contracts** (`/architecture/API_CONTRACTS.md`) for endpoint specs
 - **Apply coding guidelines** (`/context-for-ai/CODING_GUIDELINES.md`) for consistency
+- **Review UML diagrams** (`docs/SYSTEM_UML_DIAGRAMS.md`) for system architecture
+- **Check automation status** (`AUTOMATION_STATUS.md`) for what's automated vs manual
+
+**For context continuity across sessions:**
+- **Read SESSION_SUMMARY.md** for latest work completed
+- **Check AUTOMATION_STATUS.md** for automation scope understanding
+- **Review CHANGELOG.md** for recent changes and releases
 
 **Remember:** This is a learning project. Prioritize clarity and functionality over optimization.
 
 ---
 
-**Document Owner:** rdevarakond88  
-**Last Updated:** October 2025  
+**Document Owner:** rdevarakond88
+**Last Updated:** 2026-02-03
 **Status:** Living document (will evolve through development phases)

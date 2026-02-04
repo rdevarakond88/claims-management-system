@@ -311,7 +311,7 @@ async function listUsers(req, res) {
  */
 async function createUser(req, res) {
   try {
-    const { email, first_name, last_name, role, organization_id } = req.body;
+    const { email, first_name, last_name, phone_number, role, organization_id } = req.body;
 
     // Validate input
     const validationErrors = validateUserInput(req.body);
@@ -330,6 +330,7 @@ async function createUser(req, res) {
       email,
       firstName: first_name,
       lastName: last_name,
+      phoneNumber: phone_number,
       role,
       organizationId: organization_id,
       createdByAdminId: req.user.id
@@ -392,6 +393,11 @@ function validateUserInput(data) {
     errors.last_name = 'Last name is required';
   } else if (data.last_name.length > 100) {
     errors.last_name = 'Last name must be less than 100 characters';
+  }
+
+  // Phone number is optional
+  if (data.phone_number && data.phone_number.length > 255) {
+    errors.phone_number = 'Phone number must be less than 255 characters';
   }
 
   if (!data.role) {

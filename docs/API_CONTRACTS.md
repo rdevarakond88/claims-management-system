@@ -42,6 +42,7 @@ Authenticate a user and create a session.
     "role": "provider | payer | admin",
     "firstName": "string",
     "lastName": "string",
+    "phoneNumber": "string | null",
     "requiresPasswordChange": "boolean"
   },
   "sessionToken": "string"
@@ -373,6 +374,7 @@ Get the authenticated user's profile information.
     "role": "provider | payer | admin",
     "firstName": "string",
     "lastName": "string",
+    "phoneNumber": "string | null",
     "organization": {
       "id": "string",
       "name": "string",
@@ -441,6 +443,7 @@ Create a new user account with temporary password (admin only).
   "role": "provider | payer | admin (required)",
   "firstName": "string (required)",
   "lastName": "string (required)",
+  "phoneNumber": "string (optional, contact phone)",
   "organizationId": "string (required for provider/payer roles)"
 }
 ```
@@ -455,6 +458,7 @@ Create a new user account with temporary password (admin only).
     "role": "string",
     "firstName": "string",
     "lastName": "string",
+    "phoneNumber": "string | null",
     "temporaryPassword": "string (display once, 12+ chars)"
   },
   "message": "User created successfully. Temporary password must be shared securely with the user."

@@ -317,7 +317,7 @@ A system where:
 *(Detailed schema in `/docs/DATABASE_SCHEMA.md`)*
 
 ### Core Entities
-- **Users:** id, email, password_hash, role, provider_id/payer_id
+- **Users:** id, email, password_hash, role, provider_id/payer_id, phone_number (optional contact)
 - **Providers:** id, name, npi, contact_info
 - **Payers:** id, name, contact_info
 - **Claims:** id, provider_id, patient_info, service_details, status, **priority** (urgent/standard/routine), billed_amount, approved_amount, denial_reason, timestamps

@@ -127,6 +127,7 @@ Stores user authentication and role information. Users are provisioned by system
 | `payer_id` | UUID | FOREIGN KEY → payers(id) | Associated payer (if role = payer_processor) |
 | `first_name` | VARCHAR(100) | | User first name |
 | `last_name` | VARCHAR(100) | | User last name |
+| `phone_number` | VARCHAR(255) | | User contact phone number (optional) |
 | `is_active` | BOOLEAN | DEFAULT TRUE | Account active status |
 | `is_first_login` | BOOLEAN | DEFAULT TRUE | True if user needs to set permanent password |
 | `last_login` | TIMESTAMP | | Last login timestamp |
@@ -144,12 +145,12 @@ Stores user authentication and role information. Users are provisioned by system
 **Sample Data:**
 ```sql
 -- Provider user
-INSERT INTO users (email, password_hash, role, provider_id, first_name, last_name) VALUES
-('sarah.jones@lpcc.com', '$2b$10$...', 'provider_staff', '<provider_uuid>', 'Sarah', 'Jones');
+INSERT INTO users (email, password_hash, role, provider_id, first_name, last_name, phone_number) VALUES
+('sarah.jones@lpcc.com', '$2b$10$...', 'provider_staff', '<provider_uuid>', 'Sarah', 'Jones', '(502) 555-1234');
 
 -- Payer user
-INSERT INTO users (email, password_hash, role, payer_id, first_name, last_name) VALUES
-('marcus.williams@humana.com', '$2b$10$...', 'payer_processor', '<payer_uuid>', 'Marcus', 'Williams');
+INSERT INTO users (email, password_hash, role, payer_id, first_name, last_name, phone_number) VALUES
+('marcus.williams@humana.com', '$2b$10$...', 'payer_processor', '<payer_uuid>', 'Marcus', 'Williams', '(317) 555-5678');
 ```
 
 ---

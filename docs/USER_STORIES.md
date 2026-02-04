@@ -232,6 +232,7 @@
   - Email (unique, validated format)
   - First Name (required, 1-100 chars)
   - Last Name (required, 1-100 chars)
+  - Phone Number (optional, contact phone)
   - Role (Provider Staff or Payer Processor)
   - Associated Organization (dropdown of Providers or Payers based on role)
 - Temporary password is auto-generated (12+ chars, mixed case, numbers, symbols)
@@ -265,6 +266,7 @@
 **Validation Rules:**
 - Email: Required, valid format (RFC 5322), unique in database
 - First/Last Name: Required, 1-100 chars
+- Phone Number: Optional, max 255 chars
 - Role: Required, must be "provider_staff" or "payer_processor"
 - Organization: Required, must be valid UUID from providers/payers table
 - Organization must match role type (provider_staff → provider, payer_processor → payer)

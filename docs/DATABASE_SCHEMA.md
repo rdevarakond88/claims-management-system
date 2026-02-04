@@ -139,6 +139,7 @@ The CMS database is designed to support a multi-tenant claims management workflo
 | `payer_id` | UUID | FOREIGN KEY, NULLABLE | Reference to payers table (if role=payer) |
 | `first_name` | VARCHAR(100) | NULLABLE | User's first name |
 | `last_name` | VARCHAR(100) | NULLABLE | User's last name |
+| `phone_number` | VARCHAR(255) | NULLABLE | User's contact phone number |
 | `is_active` | BOOLEAN | NOT NULL, DEFAULT TRUE | Account active status |
 | `is_first_login` | BOOLEAN | NOT NULL, DEFAULT TRUE | Requires password change flag |
 | `last_login` | TIMESTAMP | NULLABLE | Last successful login timestamp |

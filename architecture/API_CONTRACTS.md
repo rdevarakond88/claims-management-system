@@ -184,6 +184,7 @@ Authenticate user and create session.
     "role": "provider_staff",
     "first_name": "Sarah",
     "last_name": "Jones",
+    "phone_number": "(502) 555-1234",
     "provider": {
       "id": "660f9500-f39c-52e5-b827-557766551111",
       "name": "Louisville Primary Care Clinic"
@@ -233,6 +234,7 @@ Get current authenticated user info.
     "role": "provider_staff",
     "first_name": "Sarah",
     "last_name": "Jones",
+    "phone_number": "(502) 555-1234",
     "is_first_login": false,
     "provider": {
       "id": "660f9500-f39c-52e5-b827-557766551111",
@@ -273,6 +275,7 @@ Set new password on first login (requires authentication with temporary password
     "id": "550e8400-e29b-41d4-a716-446655440000",
     "email": "newuser@example.com",
     "role": "provider_staff",
+    "phone_number": null,
     "is_first_login": false
   }
 }
@@ -643,6 +646,7 @@ Get current user's full profile.
     "role": "provider_staff",
     "first_name": "Sarah",
     "last_name": "Jones",
+    "phone_number": "(502) 555-1234",
     "is_active": true,
     "last_login": "2025-10-15T14:00:00Z",
     "created_at": "2025-09-01T08:00:00Z",
@@ -748,6 +752,7 @@ Create new user account with temporary password (Admin only).
   "email": "newuser@example.com",
   "first_name": "Jane",
   "last_name": "Doe",
+  "phone_number": "(502) 555-1234",
   "role": "provider_staff",
   "organization_id": "660f9500-f39c-52e5-b827-557766551111"
 }
@@ -757,6 +762,7 @@ Create new user account with temporary password (Admin only).
 - `email`: User's email address (will be used for login)
 - `first_name`: User's first name
 - `last_name`: User's last name
+- `phone_number`: User's contact phone number (optional)
 - `role`: Either "provider_staff" or "payer_processor"
 - `organization_id`: UUID of the provider (if role=provider_staff) or payer (if role=payer_processor)
 
@@ -764,6 +770,7 @@ Create new user account with temporary password (Admin only).
 - `email`: Required, valid format, unique (not already registered)
 - `first_name`: Required, 1-100 chars
 - `last_name`: Required, 1-100 chars
+- `phone_number`: Optional, max 255 chars
 - `role`: Required, must be "provider_staff" or "payer_processor"
 - `organization_id`: Required, must be valid UUID of existing provider/payer matching role
 
@@ -777,6 +784,7 @@ Create new user account with temporary password (Admin only).
     "role": "provider_staff",
     "first_name": "Jane",
     "last_name": "Doe",
+    "phone_number": "(502) 555-1234",
     "is_first_login": true,
     "organization": {
       "id": "660f9500-f39c-52e5-b827-557766551111",
